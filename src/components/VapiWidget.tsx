@@ -24,16 +24,18 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentCallId, setCurrentCallId] = useState<string | null>(null);
-  const [killTimer, setKillTimer] = useState<NodeJS.Timeout | null>(null);
-  const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null);
+  
+  // Timer states - simplified
+  const [timeRemaining, setTimeRemaining] = useState<number>(180); // 3 minutes
   const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number>(180);
-  const [inactivityWarning, setInactivityWarning] = useState(false);
-  const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [warningTriggered, setWarningTriggered] = useState(false);
+  
+  // Inactivity tracking
+  const [lastActivity, setLastActivity] = useState<number>(Date.now());
+  const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null);
+  const [inactivityWarning, setInactivityWarning] = useState(false);
 
-  // Hard cap timer - 3 minutes (180 seconds)
-  const HARD_CAP_SECONDS = 180;
+  const CALL_DURATION = 180; // 3 minutes in seconds
   const INACTIVITY_TIMEOUT = 20_000; // 20 seconds
   const INACTIVITY_WARNING_TIME = 15_000; // Show warning after 15 seconds
 
@@ -43,68 +45,57 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
     // Event listeners
     vapiInstance.on('call-start', () => {
-      console.log('Call started');
+      console.log('Call started - beginning countdown');
       setIsConnected(true);
       setIsLoading(false);
       setLastActivity(Date.now());
       setInactivityWarning(false);
       setWarningTriggered(false);
+      
+      // Reset and start the countdown timer
+      setTimeRemaining(CALL_DURATION);
+      startCountdown();
+      startInactivityMonitoring();
+      
       onCallStart?.();
     });
 
     vapiInstance.on('call-end', () => {
-      console.log('Call ended');
+      console.log('Call ended - stopping all timers');
       setIsConnected(false);
       setIsSpeaking(false);
       setIsLoading(false);
       setCurrentCallId(null);
-      setTimeRemaining(HARD_CAP_SECONDS);
       setInactivityWarning(false);
-      setLastActivity(Date.now());
       setWarningTriggered(false);
       
-      // Clear kill timer if call ended naturally
-      if (killTimer) {
-        clearTimeout(killTimer);
-        setKillTimer(null);
-      }
-      if (inactivityTimer) {
-        clearTimeout(inactivityTimer);
-        setInactivityTimer(null);
-      }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        setCountdownInterval(null);
-      }
+      // Reset timer state
+      setTimeRemaining(CALL_DURATION);
+      
+      // Clear all timers
+      clearAllTimers();
       
       onCallEnd?.();
     });
 
     vapiInstance.on('speech-start', () => {
-      console.log('Assistant started speaking');
       setIsSpeaking(true);
       setLastActivity(Date.now());
       setInactivityWarning(false);
     });
 
     vapiInstance.on('speech-end', () => {
-      console.log('Assistant stopped speaking');
       setIsSpeaking(false);
       setLastActivity(Date.now());
     });
 
-    // Listen for various message types
+    // Listen for call messages to get call ID
     vapiInstance.on('message', (message) => {
       if (message.type === 'call-start') {
         const callId = message.call?.id;
         if (callId) {
+          console.log('Got call ID:', callId);
           setCurrentCallId(callId);
-          // Start the timers immediately
-          console.log('Starting call timers for call:', callId);
-          setTimeRemaining(HARD_CAP_SECONDS); // Reset to 3 minutes
-          startCountdownTimer(callId);
-          startKillTimer(callId);
-          startInactivityTimer(callId);
         }
       }
       
@@ -118,112 +109,81 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     vapiInstance.on('error', (error) => {
       console.error('Vapi error:', error);
       setIsLoading(false);
-      
-      // Clear all timers on error
-      if (killTimer) {
-        clearTimeout(killTimer);
-        setKillTimer(null);
-      }
-      if (inactivityTimer) {
-        clearTimeout(inactivityTimer);
-        setInactivityTimer(null);
-      }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        setCountdownInterval(null);
-      }
+      clearAllTimers();
     });
 
     return () => {
       vapiInstance?.stop();
-      if (killTimer) {
-        clearTimeout(killTimer);
-      }
-      if (inactivityTimer) {
-        clearTimeout(inactivityTimer);
-      }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-      }
+      clearAllTimers();
     };
   }, [apiKey, onCallStart, onCallEnd]);
 
-  // Send warning message to agent
-  const sendWarningToAgent = () => {
-    if (vapi && !warningTriggered) {
-      setWarningTriggered(true);
-      console.log('Sending warning to agent:', warningMessage);
-      
-      // Send message to the agent through Vapi
-      // This will make the AI assistant say the warning message
-      vapi.send({
-        type: 'add-message',
-        message: {
-          type: 'request-response-delayed',
-          content: warningMessage,
-          delaySeconds: 0
-        }
-      });
+  // Clear all active timers
+  const clearAllTimers = () => {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      setCountdownInterval(null);
+    }
+    if (inactivityTimer) {
+      clearInterval(inactivityTimer);
+      setInactivityTimer(null);
     }
   };
 
-  // Start the countdown timer
-  const startCountdownTimer = (callId: string) => {
-    console.log('Starting countdown timer');
+  // Start the main countdown timer
+  const startCountdown = () => {
+    console.log('Starting countdown from', CALL_DURATION, 'seconds');
     
-    // Clear any existing interval
+    // Clear any existing countdown
     if (countdownInterval) {
       clearInterval(countdownInterval);
     }
     
+    // Create new countdown interval
     const interval = setInterval(() => {
-      setTimeRemaining(currentTime => {
-        console.log('Countdown tick:', currentTime);
-        const newTime = currentTime - 1;
+      setTimeRemaining(prevTime => {
+        const newTime = prevTime - 1;
+        console.log('Timer tick:', newTime, 'seconds remaining');
         
-        // Trigger warning at configured time before end
-        if (newTime === warningSeconds && !warningTriggered) {
-          console.log('Triggering warning at', newTime, 'seconds');
+        // Send warning to agent when time is running low
+        if (newTime === warningSeconds && !warningTriggered && vapi && currentCallId) {
+          console.log('Triggering agent warning at', newTime, 'seconds');
+          setWarningTriggered(true);
           sendWarningToAgent();
         }
         
-        // Auto-end call when timer reaches 0
+        // End call when timer reaches 0
         if (newTime <= 0) {
-          console.log('Timer reached 0, ending call');
+          console.log('Timer reached 0 - ending call');
           clearInterval(interval);
           setCountdownInterval(null);
-          setTimeout(() => endCallViaAPI(callId), 1000); // Small delay after warning
+          
+          // End the call via API
+          if (currentCallId) {
+            setTimeout(() => endCallViaAPI(currentCallId), 1000);
+          }
+          
           return 0;
         }
         
         return newTime;
       });
-    }, 1000);
+    }, 1000); // Update every second
+    
     setCountdownInterval(interval);
   };
-  
-  // Start the kill timer as backup
-  const startKillTimer = (callId: string) => {
-    console.log('Starting kill timer');
-    
-    // Set hard kill timer as backup (3 minutes + small buffer)
-    const timer = setTimeout(async () => {
-      console.log('Hard kill timer triggered - ending call');
-      endCallViaAPI(callId);
-      setKillTimer(null);
-    }, (HARD_CAP_SECONDS + 5) * 1000); // 5 second buffer
-    setKillTimer(timer);
-  };
 
-  // Monitor inactivity and auto-end calls
-  const startInactivityTimer = (callId: string) => {
+  // Start inactivity monitoring
+  const startInactivityMonitoring = () => {
     const checkInactivity = () => {
       const now = Date.now();
       const timeSinceActivity = now - lastActivity;
       
       if (timeSinceActivity >= INACTIVITY_TIMEOUT) {
         console.log('Inactivity timeout - ending call');
-        endCallViaAPI(callId);
+        if (currentCallId) {
+          endCallViaAPI(currentCallId);
+        }
         return;
       }
       
@@ -239,10 +199,27 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     setInactivityTimer(timer);
   };
 
+  // Send warning message to agent
+  const sendWarningToAgent = () => {
+    if (vapi && !warningTriggered && currentCallId) {
+      console.log('Sending warning to agent:', warningMessage);
+      
+      // Send message to the agent through Vapi
+      vapi.send({
+        type: 'add-message',
+        message: {
+          type: 'request-response-delayed',
+          content: warningMessage,
+          delaySeconds: 0
+        }
+      });
+    }
+  };
+
   // Centralized call termination function
   const endCallViaAPI = async (callId: string) => {
     try {
-      // Direct API call to Vapi's hangup endpoint
+      console.log('Terminating call via API:', callId);
       await fetch(`https://api.vapi.ai/call/${callId}/hangup`, {
         method: 'POST',
         headers: {
@@ -250,7 +227,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           'Content-Type': 'application/json'
         }
       });
-      console.log('Call terminated via API');
+      console.log('Call terminated successfully');
     } catch (error) {
       console.error('Failed to terminate call via API:', error);
       // Fallback: force stop the vapi instance
@@ -270,22 +247,19 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       setIsLoading(true);
       setLastActivity(Date.now());
       setInactivityWarning(false);
+      setWarningTriggered(false);
       vapi.start(assistantId);
     }
   };
 
   const endCall = () => {
     if (vapi && isConnected) {
-      // Clear all timers when manually ending call
-      if (killTimer) {
-        clearTimeout(killTimer);
-        setKillTimer(null);
+      clearAllTimers();
+      if (currentCallId) {
+        endCallViaAPI(currentCallId);
+      } else {
+        vapi.stop();
       }
-      if (inactivityTimer) {
-        clearTimeout(inactivityTimer);
-        setInactivityTimer(null);
-      }
-      vapi.stop();
     }
   };
 
@@ -319,7 +293,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         </button>
       ) : (
         <div className="flex flex-col items-center gap-3">
-          {/* Time Remaining Indicator */}
+          {/* Time Remaining Display - Main Timer Box */}
           <div className="text-center">
             <div className="text-sm text-white/70 mb-1">Demo Time Remaining</div>
             <div className={`text-2xl font-bold px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-300 ${
@@ -342,7 +316,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
                 🔇 Inactive - Call will end soon
               </div>
             )}
-            
           </div>
           
           {/* End Call Button */}
