@@ -24,17 +24,17 @@ export default function RobotCanvas({ className }: Props) {
           // Start the animation sequence
           setAnimationPhase('popup')
           
-          // Popup phase: 3s
-          setTimeout(() => setAnimationPhase('fading'), 3000)
+          // Popup phase: 1.5s
+          setTimeout(() => setAnimationPhase('fading'), 1500)
           
-          // Fade to background phase: 2s
-          setTimeout(() => setAnimationPhase('background'), 5000)
+          // Fade to background phase: 1.5s
+          setTimeout(() => setAnimationPhase('background'), 3000)
           
-          // Robot ready phase: after total 6s
+          // Robot ready phase: after total 4s
           setTimeout(() => {
             setAnimationPhase('robot-ready')
             setReady(true)
-          }, 6000)
+          }, 4000)
         }
       },
       { rootMargin: "200px" }
@@ -89,15 +89,10 @@ export default function RobotCanvas({ className }: Props) {
               ${animationPhase === 'popup' ? 'animate-gentle-fade-in' : 'animate-gentle-fade-out'}
             `}
           >
-            {/* Main text */}
             <div className="relative z-10 text-center">
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 tracking-wide">
+              <h3 className="text-3xl sm:text-4xl font-bold text-white tracking-wide">
                 I'm here ✨
               </h3>
-              <p className="text-white/90 text-base leading-relaxed font-medium">
-                Your AI employee is ready to work.<br />
-                Let's build something amazing together.
-              </p>
             </div>
           </div>
         </div>
