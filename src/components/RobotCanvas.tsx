@@ -7,14 +7,11 @@ type Props = {
   className?: string
 }
 
-type AnimationPhase = 'initial' | 'popup' | 'fading' | 'background' | 'robot-ready'
 /**
- * Lazy-mounts Spline when in view, fades in, and sits on a bright cyan sky glow.
+ * Lazy-mounts Spline when in view and sits on a bright cyan sky glow.
  */
 export default function RobotCanvas({ className }: Props) {
   const [ready, setReady] = useState(false)
-  const [showPopup, setShowPopup] = useState(false)
-  const [showRobot, setShowRobot] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -22,15 +19,7 @@ export default function RobotCanvas({ className }: Props) {
     const io = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting && !ready) {
-          // Show popup immediately
-          setShowPopup(true)
-          
-          // Hide popup and show robot after 2s
-          setTimeout(() => {
-            setShowPopup(false)
-            setShowRobot(true)
-            setReady(true)
-          }, 2000)
+          setReady(true)
         }
       },
       { rootMargin: "200px" }
@@ -62,43 +51,11 @@ export default function RobotCanvas({ className }: Props) {
           opacity-90 blur-sm animate-glow
         "
       />
-
-      {/* Enhanced "I'm coming" popup notification */}
-      {showPopup && (
-        <div
-          className={`
-            absolute inset-0 z-20 flex items-center justify-center
-            pointer-events-none
-            transition-opacity duration-500 ease-out
-            ${showPopup ? 'opacity-100' : 'opacity-0'}
-          `}
-        >
-          {/* Simple text notification */}
-          <div
-            className={`
-              px-6 py-4 rounded-xl
-              bg-white/10 backdrop-blur-md
-              border border-white/20
-              transform transition-all duration-500 ease-out
-            `}
-          >
-            <div className="text-center">
-              <h3 className="text-3xl sm:text-4xl font-bold text-white tracking-wide">
-                I'm here ✨
-              </h3>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Robot canvas */}
       <div
-        className={`
-          absolute inset-0 rounded-none overflow-hidden
-          ${showRobot ? "opacity-100 animate-float" : "opacity-0"}
-          transition-opacity duration-300
-        `}
+        className="absolute inset-0 rounded-none overflow-hidden animate-float"
       >
-        {showRobot ? (
+        {ready ? (
           <SplineScene scene={scene} className="w-full h-full" />
         ) : (
           <div className="h-full grid place-items-center text-white/40">
