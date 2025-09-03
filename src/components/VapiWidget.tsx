@@ -332,12 +332,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
               </div>
             )}
             
-            {/* Call Duration Indicator */}
-            {callStartTime && (
-              <div className="text-xs text-white/50 mt-2">
-                Call duration: {formatTime(Math.floor((Date.now() - callStartTime) / 1000))}
-              </div>
-            )}
           </div>
           
           {/* End Call Button */}
