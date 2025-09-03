@@ -101,40 +101,54 @@ export default function ROICalculator(){
               />
             </EnhancedInput>
 
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-cyan-600" />
-                  <label className="font-semibold text-slate-800">Automation Impact</label>
-                </div>
-                <span className="text-cyan-600 font-bold text-xl">{coverage}%</span>
-              </div>
+            <div className="mt-8 group">
               <div className="relative">
-                <input 
-                  type="range" 
-                  min={10} 
-                  max={95} 
-                  value={coverage} 
-                  onChange={e=>setCoverage(+e.target.value)} 
-                  className="w-full h-3 bg-gradient-to-r from-slate-200 to-cyan-100 rounded-lg appearance-none slider shadow-inner hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-cyan-400/50"
-                  style={{
-                    background: `linear-gradient(to right, #0891b2 0%, #22d3ee ${coverage}%, #e2e8f0 ${coverage}%, #cbd5e1 100%)`
-                  }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-slate-500 mt-2 font-medium">
-                <span>Conservative</span>
-                <span>Balanced</span>
-                <span>Aggressive</span>
-              </div>
-              <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-cyan-600 animate-pulse" />
-                  <p className="text-lg font-bold text-slate-800 tracking-tight">
-                    How much of your manual work can be automated?
-                  </p>
+                {/* Animated background glow for slider */}
+                <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-purple-400/20 to-pink-400/20 opacity-0 group-hover:opacity-100 blur-sm transition-all duration-500" />
+                
+                <div className="relative bg-gradient-to-br from-white to-purple-50/50 rounded-2xl border border-purple-200/50 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-purple-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
+                        <Zap className="w-4 h-4 text-white" />
+                      </div>
+                      <label className="font-bold text-slate-800 text-lg">Automation Impact</label>
+                    </div>
+                    <span className="text-purple-600 font-bold text-2xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent drop-shadow-sm">{coverage}%</span>
+                  </div>
+                  
+                  <div className="relative mb-4">
+                    <input 
+                      type="range" 
+                      min={10} 
+                      max={95} 
+                      value={coverage} 
+                      onChange={e=>setCoverage(+e.target.value)} 
+                      className="w-full h-3 bg-gradient-to-r from-slate-200 to-cyan-100 rounded-lg appearance-none slider shadow-inner hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-cyan-400/50"
+                      style={{
+                        background: `linear-gradient(to right, #8b5cf6 0%, #ec4899 ${coverage}%, #e2e8f0 ${coverage}%, #cbd5e1 100%)`
+                      }}
+                    />
+                    {/* Animated glow on track */}
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" />
+                  </div>
+                  
+                  <div className="flex justify-between text-xs text-slate-500 mb-4 font-medium">
+                    <span>Conservative</span>
+                    <span>Balanced</span>
+                    <span>Aggressive</span>
+                  </div>
+                  
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-5 h-5 text-purple-600 animate-pulse" />
+                      <p className="text-lg font-bold text-slate-800 tracking-tight">
+                        How much of your manual work can be automated?
+                      </p>
+                    </div>
+                    <p className="text-sm text-slate-600 ml-7">This determines your transformation potential</p>
+                  </div>
                 </div>
-                <p className="text-sm text-slate-600 mt-1 ml-7">This determines your transformation potential</p>
               </div>
             </div>
 
