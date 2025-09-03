@@ -13,7 +13,8 @@ type AnimationPhase = 'initial' | 'popup' | 'fading' | 'background' | 'robot-rea
  */
 export default function RobotCanvas({ className }: Props) {
   const [ready, setReady] = useState(false)
-  const [animationPhase, setAnimationPhase] = useState<AnimationPhase>('initial')
+  const [showPopup, setShowPopup] = useState(false)
+  const [showRobot, setShowRobot] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -21,20 +22,15 @@ export default function RobotCanvas({ className }: Props) {
     const io = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting && !ready) {
-          // Start the animation sequence
-          setAnimationPhase('popup')
+          // Show popup immediately
+          setShowPopup(true)
           
-          // Popup phase: 1.5s
-          setTimeout(() => setAnimationPhase('fading'), 1500)
-          
-          // Fade to background phase: 1.5s
-          setTimeout(() => setAnimationPhase('background'), 3000)
-          
-          // Robot ready phase: after total 4s
+          // Hide popup and show robot after 2s
           setTimeout(() => {
-            setAnimationPhase('robot-ready')
+            setShowPopup(false)
+            setShowRobot(true)
             setReady(true)
-          }, 4000)
+          }, 2000)
         }
       },
       { rootMargin: "200px" }
@@ -68,28 +64,25 @@ export default function RobotCanvas({ className }: Props) {
       />
 
       {/* Enhanced "I'm coming" popup notification */}
-      {(animationPhase === 'popup' || animationPhase === 'fading') && (
+      {showPopup && (
         <div
           className={`
             absolute inset-0 z-20 flex items-center justify-center
             pointer-events-none
+            transition-opacity duration-500 ease-out
+            ${showPopup ? 'opacity-100' : 'opacity-0'}
           `}
         >
-          {/* Gentle backdrop */}
-          <div className="absolute inset-0 bg-slate-900/20" />
-          
           {/* Simple text notification */}
           <div
             className={`
-              absolute top-1/2 left-1/2 z-30
               px-6 py-4 rounded-xl
               bg-white/10 backdrop-blur-md
               border border-white/20
-              backdrop-blur-lg
-              ${animationPhase === 'popup' ? 'animate-gentle-fade-in' : 'animate-gentle-fade-out'}
+              transform transition-all duration-500 ease-out
             `}
           >
-            <div className="relative z-10 text-center">
+            <div className="text-center">
               <h3 className="text-3xl sm:text-4xl font-bold text-white tracking-wide">
                 I'm here ✨
               </h3>
@@ -101,11 +94,11 @@ export default function RobotCanvas({ className }: Props) {
       <div
         className={`
           absolute inset-0 rounded-none overflow-hidden
-          ${animationPhase === 'robot-ready' ? "opacity-100 animate-float" : "opacity-0"}
-          transition-opacity duration-1000
+          ${showRobot ? "opacity-100 animate-float" : "opacity-0"}
+          transition-opacity duration-300
         `}
       >
-        {animationPhase === 'robot-ready' ? (
+        {showRobot ? (
           <SplineScene scene={scene} className="w-full h-full" />
         ) : (
           <div className="h-full grid place-items-center text-white/40">
