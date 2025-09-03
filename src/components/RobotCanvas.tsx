@@ -91,12 +91,12 @@ export default function RobotCanvas({ className }: Props) {
           >
             {/* Main text */}
             <div className="relative z-10 text-center">
-              <h3 className="text-xl sm:text-2xl font-semibold text-white mb-3">
-                I'm coming to join your team
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 tracking-wide">
+                I'm here ✨
               </h3>
-              <p className="text-white/80 text-sm leading-relaxed">
-                No interviews needed. No salary negotiations.<br />
-                Just 24/7 dedication to growing your business.
+              <p className="text-white/90 text-base leading-relaxed font-medium">
+                Your AI employee is ready to work.<br />
+                Let's build something amazing together.
               </p>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function RobotCanvas({ className }: Props) {
           <div className="h-full grid place-items-center text-white/40">
             <div className="text-center">
               <div className="text-6xl mb-4">🤖</div>
-              <div className="text-lg font-medium">Preparing your AI employee...</div>
+              <div className="text-lg font-medium">Ready when you are...</div>
             </div>
           </div>
         )}
