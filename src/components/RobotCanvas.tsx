@@ -58,12 +58,7 @@ export default function RobotCanvas({ className }: Props) {
         {ready ? (
           <SplineScene scene={scene} className="w-full h-full" />
         ) : (
-          <div className="h-full grid place-items-center text-white/40">
-            <div className="text-center">
-              <div className="text-6xl mb-4">🤖</div>
-              <div className="text-lg font-medium">Ready when you are...</div>
-            </div>
-          </div>
+          <div className="h-full" />
         )}
       </div>
     </div>
