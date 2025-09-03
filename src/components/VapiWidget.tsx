@@ -7,13 +7,17 @@ interface VapiWidgetProps {
   assistantId: string;
   onCallStart?: () => void;
   onCallEnd?: () => void;
+  warningSeconds?: number; // Configurable warning time (default: 30 seconds)
+  warningMessage?: string; // Configurable warning message
 }
 
 const VapiWidget: React.FC<VapiWidgetProps> = ({ 
   apiKey, 
   assistantId, 
   onCallStart,
-  onCallEnd 
+  onCallEnd,
+  warningSeconds = 30,
+  warningMessage = "UPS, looks like I gotta go. It has been a real pleasure. Talk soon."
 }) => {
   const [vapi, setVapi] = useState<Vapi | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -26,9 +30,10 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [timeRemaining, setTimeRemaining] = useState<number>(180); // 3 minutes in seconds
   const [inactivityWarning, setInactivityWarning] = useState(false);
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
+  const [warningTriggered, setWarningTriggered] = useState(false);
+  const [callStartTime, setCallStartTime] = useState<number | null>(null);
 
   // Hard cap timer - 3 minutes (180 seconds)
-  const HARD_CAP_MS = 180_000;
   const HARD_CAP_SECONDS = 180;
   const INACTIVITY_TIMEOUT = 20_000; // 20 seconds
   const INACTIVITY_WARNING_TIME = 15_000; // Show warning after 15 seconds
@@ -44,6 +49,9 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       setIsLoading(false);
       setLastActivity(Date.now());
       setInactivityWarning(false);
+      setWarningTriggered(false);
+      setCallStartTime(Date.now());
+      setTimeRemaining(HARD_CAP_SECONDS);
       onCallStart?.();
     });
 
@@ -56,6 +64,8 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       setTimeRemaining(HARD_CAP_SECONDS);
       setInactivityWarning(false);
       setLastActivity(Date.now());
+      setWarningTriggered(false);
+      setCallStartTime(null);
       
       // Clear kill timer if call ended naturally
       if (killTimer) {
@@ -93,7 +103,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         const callId = message.call?.id;
         if (callId) {
           setCurrentCallId(callId);
-          setTimeRemaining(HARD_CAP_SECONDS);
           startCallTimers(callId);
         }
       }
@@ -138,30 +147,57 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     };
   }, [apiKey, onCallStart, onCallEnd]);
 
-  // Start both countdown and inactivity timers
+  // Send warning message to agent
+  const sendWarningToAgent = () => {
+    if (vapi && !warningTriggered) {
+      setWarningTriggered(true);
+      console.log('Sending warning to agent:', warningMessage);
+      
+      // Send message to the agent through Vapi
+      // This will make the AI assistant say the warning message
+      vapi.send({
+        type: 'add-message',
+        message: {
+          type: 'request-response-delayed',
+          content: warningMessage,
+          delaySeconds: 0
+        }
+      });
+    }
+  };
+
+  // Start countdown, kill timer, and inactivity monitoring
   const startCallTimers = (callId: string) => {
     console.log(`Starting 3-minute protection timer for call: ${callId}`);
     
     // Update countdown every second
     const interval = setInterval(() => {
       setTimeRemaining(prev => {
-        if (prev <= 1) {
+        const newTime = prev - 1;
+        
+        // Trigger warning at configured time before end
+        if (newTime === warningSeconds && !warningTriggered) {
+          sendWarningToAgent();
+        }
+        
+        // Auto-end call when timer reaches 0
+        if (newTime <= 0) {
           clearInterval(interval);
-          // Auto-end call when timer reaches 0
-          endCallViaAPI(callId);
+          setTimeout(() => endCallViaAPI(callId), 1000); // Small delay after warning
           return 0;
         }
-        return prev - 1;
+        
+        return newTime;
       });
     }, 1000);
     setCountdownInterval(interval);
     
-    // Set hard kill timer as backup
+    // Set hard kill timer as backup (3 minutes + small buffer)
     const timer = setTimeout(async () => {
       console.log('Hard kill timer triggered - ending call');
       endCallViaAPI(callId);
       setKillTimer(null);
-    }, HARD_CAP_MS);
+    }, (HARD_CAP_SECONDS + 5) * 1000); // 5 second buffer
     setKillTimer(timer);
     
     // Start inactivity monitoring
@@ -275,16 +311,31 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           {/* Time Remaining Indicator */}
           <div className="text-center">
             <div className="text-sm text-white/70 mb-1">Demo Time Remaining</div>
-            <div className={`text-2xl font-bold px-4 py-2 rounded-lg backdrop-blur-sm transition-colors duration-300 ${
-              timeRemaining <= 60 ? 'text-red-300 bg-red-900/40 animate-pulse' : 
+            <div className={`text-2xl font-bold px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-300 ${
+              timeRemaining <= warningSeconds ? 'text-red-300 bg-red-900/50 animate-pulse ring-2 ring-red-400/50' : 
+              timeRemaining <= 60 ? 'text-yellow-300 bg-yellow-900/40' : 
               inactivityWarning ? 'text-yellow-300 bg-yellow-900/40' : 
               'text-white bg-black/20'
             }`}>
               {formatTime(timeRemaining)}
             </div>
+            
+            {/* Warning Indicators */}
+            {timeRemaining <= warningSeconds && timeRemaining > 0 && (
+              <div className="text-sm text-red-300 mt-2 animate-pulse font-medium">
+                ⚠ Agent will receive closing notice
+              </div>
+            )}
             {inactivityWarning && (
               <div className="text-sm text-yellow-300 mt-1 animate-pulse">
-                ⚠ Inactive - Call will end soon
+                🔇 Inactive - Call will end soon
+              </div>
+            )}
+            
+            {/* Call Duration Indicator */}
+            {callStartTime && (
+              <div className="text-xs text-white/50 mt-2">
+                Call duration: {formatTime(Math.floor((Date.now() - callStartTime) / 1000))}
               </div>
             )}
           </div>
