@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, lazy, ErrorBoundary } from 'react'
-const Spline = lazy(() => import('@splinetool/react-spline'))
+const Spline = lazy(() => import('@splinetool/react-spline').then(module => ({ default: module.default })))
 
 interface SplineSceneProps {
   scene: string
