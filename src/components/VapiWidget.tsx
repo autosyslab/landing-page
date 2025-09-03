@@ -306,3 +306,5 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 };
 
 export default VapiWidget;
+
+export default VapiWidget
