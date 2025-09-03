@@ -39,7 +39,8 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [inactivityWarning, setInactivityWarning] = useState(false);
 
   const CALL_DURATION = 60; // 1 minute in seconds
-  const INACTIVITY_TIMEOUT = 20_000; // 20 seconds
+  const INACTIVITY_TIMEOUT = 20000; // 20 seconds
+  const WARNING_SECONDS = 30; // Warning at 30 seconds remaining
 
   // Keep timeRemainingRef in sync with timeRemaining state
   useEffect(() => {
@@ -160,7 +161,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       timeRemainingRef.current = newTime;
       
       // Send warning to agent when time is running low
-      if (newTime === warningSeconds && !warningTriggeredRef.current) {
+      if (newTime === WARNING_SECONDS && !warningTriggeredRef.current) {
         console.log('Triggering agent warning at', newTime, 'seconds');
         warningTriggeredRef.current = true;
         sendWarningToAgent();
@@ -174,7 +175,13 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         
         // End the call via API with slight delay for warning delivery
         if (currentCallId) {
-          setTimeout(() => endCallViaAPI(currentCallId), 1000);
+          setTimeout(() => {
+            console.log('Timer expired - executing automatic hangup');
+            endCallViaAPI(currentCallId);
+          }, 1000);
+          // Fallback if no call ID available
+          console.log('Timer expired - fallback hangup');
+          vapi?.stop();
         }
       }
     }, 1000); // Update exactly every 1000ms (1 second)
@@ -228,7 +235,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   // Centralized call termination function
   const endCallViaAPI = async (callId: string) => {
     try {
-      console.log('Terminating call via API:', callId);
+      console.log('🔚 Executing VAPI API call termination for call ID:', callId);
       await fetch(`https://api.vapi.ai/call/${callId}/hangup`, {
         method: 'POST',
         headers: {
@@ -236,9 +243,10 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           'Content-Type': 'application/json'
         }
       });
-      console.log('Call terminated successfully');
+      console.log('✅ Call terminated successfully via VAPI API');
     } catch (error) {
-      console.error('Failed to terminate call via API:', error);
+      console.error('❌ Failed to terminate call via VAPI API:', error);
+      console.log('🔄 Executing fallback termination...');
       // Fallback: force stop the vapi instance
       vapi?.stop();
     }
@@ -315,7 +323,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
             </div>
             
             {/* Warning Indicators */}
-            {timeRemaining <= warningSeconds && timeRemaining > 0 && (
+            {timeRemaining <= WARNING_SECONDS && timeRemaining > 0 && (
               <div className="text-sm text-red-300 mt-2 animate-pulse font-medium">
                 ⚠ Agent will receive closing notice
               </div>
