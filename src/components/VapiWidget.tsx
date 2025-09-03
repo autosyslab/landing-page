@@ -95,7 +95,12 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     });
 
     vapiInstance.on('error', (error) => {
-      console.error('❌ VAPI error:', error);
+      // Handle expected server-side call terminations vs actual errors
+      if (error?.error?.type === 'ejected' || error?.type === 'ejected') {
+        console.log('⏰ Call ended by server timeout (expected)', error);
+      } else {
+        console.error('❌ VAPI error:', error);
+      }
       handleCallEnd();
     });
 
@@ -301,3 +306,5 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 };
 
 export default VapiWidget;
+
+export default VapiWidget
