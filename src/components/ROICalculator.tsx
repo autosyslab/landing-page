@@ -67,7 +67,7 @@ export default function ROICalculator(){
               <input 
                 type="number" 
                 min={0} 
-                className="w-full rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 p-3 text-slate-700 bg-white/90 shadow-sm transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white" 
                 value={monthlyHours} 
                 onChange={e=>setMonthlyHours(e.target.value === '' ? '' : +e.target.value)} 
               />
@@ -81,7 +81,7 @@ export default function ROICalculator(){
               <input 
                 type="number" 
                 min={0} 
-                className="w-full rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 p-3 text-slate-700 bg-white/90 shadow-sm transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white" 
                 value={hourlyCost} 
                 onChange={e=>setHourlyCost(e.target.value === '' ? '' : +e.target.value)} 
               />
@@ -95,7 +95,7 @@ export default function ROICalculator(){
               <input 
                 type="number" 
                 min={0} 
-                className="w-full rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 p-3 text-slate-700 bg-white/90 shadow-sm transition-all duration-200" 
+                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white" 
                 value={employees} 
                 onChange={e=>setEmployees(e.target.value === '' ? '' : +e.target.value)} 
               />
@@ -116,9 +116,9 @@ export default function ROICalculator(){
                   max={95} 
                   value={coverage} 
                   onChange={e=>setCoverage(+e.target.value)} 
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none slider"
+                  className="w-full h-3 bg-gradient-to-r from-slate-200 to-cyan-100 rounded-lg appearance-none slider shadow-inner hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-cyan-400/50"
                   style={{
-                    background: `linear-gradient(to right, #06b6d4 0%, #06b6d4 ${coverage}%, #e2e8f0 ${coverage}%, #e2e8f0 100%)`
+                    background: `linear-gradient(to right, #0891b2 0%, #22d3ee ${coverage}%, #e2e8f0 ${coverage}%, #cbd5e1 100%)`
                   }}
                 />
               </div>
