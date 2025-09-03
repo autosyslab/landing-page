@@ -27,11 +27,10 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [killTimer, setKillTimer] = useState<NodeJS.Timeout | null>(null);
   const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null);
   const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number>(180); // 3 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState<number>(180);
   const [inactivityWarning, setInactivityWarning] = useState(false);
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [warningTriggered, setWarningTriggered] = useState(false);
-  const [callStartTime, setCallStartTime] = useState<number | null>(null);
 
   // Hard cap timer - 3 minutes (180 seconds)
   const HARD_CAP_SECONDS = 180;
@@ -50,8 +49,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       setLastActivity(Date.now());
       setInactivityWarning(false);
       setWarningTriggered(false);
-      setCallStartTime(Date.now());
-      setTimeRemaining(HARD_CAP_SECONDS);
       onCallStart?.();
     });
 
@@ -65,7 +62,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       setInactivityWarning(false);
       setLastActivity(Date.now());
       setWarningTriggered(false);
-      setCallStartTime(null);
       
       // Clear kill timer if call ended naturally
       if (killTimer) {
@@ -103,7 +99,12 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         const callId = message.call?.id;
         if (callId) {
           setCurrentCallId(callId);
-          startCallTimers(callId);
+          // Start the timers immediately
+          console.log('Starting call timers for call:', callId);
+          setTimeRemaining(HARD_CAP_SECONDS); // Reset to 3 minutes
+          startCountdownTimer(callId);
+          startKillTimer(callId);
+          startInactivityTimer(callId);
         }
       }
       
@@ -166,23 +167,31 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     }
   };
 
-  // Start countdown, kill timer, and inactivity monitoring
-  const startCallTimers = (callId: string) => {
-    console.log(`Starting 3-minute protection timer for call: ${callId}`);
+  // Start the countdown timer
+  const startCountdownTimer = (callId: string) => {
+    console.log('Starting countdown timer');
     
-    // Update countdown every second
+    // Clear any existing interval
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
+    
     const interval = setInterval(() => {
-      setTimeRemaining(prev => {
-        const newTime = prev - 1;
+      setTimeRemaining(currentTime => {
+        console.log('Countdown tick:', currentTime);
+        const newTime = currentTime - 1;
         
         // Trigger warning at configured time before end
         if (newTime === warningSeconds && !warningTriggered) {
+          console.log('Triggering warning at', newTime, 'seconds');
           sendWarningToAgent();
         }
         
         // Auto-end call when timer reaches 0
         if (newTime <= 0) {
+          console.log('Timer reached 0, ending call');
           clearInterval(interval);
+          setCountdownInterval(null);
           setTimeout(() => endCallViaAPI(callId), 1000); // Small delay after warning
           return 0;
         }
@@ -191,6 +200,11 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       });
     }, 1000);
     setCountdownInterval(interval);
+  };
+  
+  // Start the kill timer as backup
+  const startKillTimer = (callId: string) => {
+    console.log('Starting kill timer');
     
     // Set hard kill timer as backup (3 minutes + small buffer)
     const timer = setTimeout(async () => {
@@ -199,9 +213,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       setKillTimer(null);
     }, (HARD_CAP_SECONDS + 5) * 1000); // 5 second buffer
     setKillTimer(timer);
-    
-    // Start inactivity monitoring
-    startInactivityTimer(callId);
   };
 
   // Monitor inactivity and auto-end calls
