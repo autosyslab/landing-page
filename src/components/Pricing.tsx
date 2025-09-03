@@ -89,7 +89,9 @@ export default function Pricing(){
                 </ul>
                 <div className="mt-auto pt-6">
                   <a href="#roi" className={clsx(
-                    "w-full inline-flex justify-center rounded-xl px-5 py-3 font-bold text-base focus:outline-none focus-visible:ring-2 transition-all duration-300 hover:scale-105",
+                    href="https://cal.com/iulian-boamfa-rjnurb/30min"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     popular
                       ? "bg-gradient-to-r from-blue-500 to-violet-500 text-slate-900 ring-blue-300 shadow-[0_0_20px_rgba(56,189,248,0.5)] hover:shadow-[0_0_30px_rgba(56,189,248,0.8)]"
                       : "bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-900 hover:from-cyan-400 hover:to-blue-400 ring-cyan-300 shadow-[0_0_15px_rgba(0,212,255,0.5)] hover:shadow-[0_0_25px_rgba(0,212,255,0.8)]"
