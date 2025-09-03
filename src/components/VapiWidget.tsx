@@ -42,7 +42,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       console.log('Call started');
       setIsConnected(true);
       setIsLoading(false);
-      setTimeRemaining(HARD_CAP_SECONDS);
       setLastActivity(Date.now());
       setInactivityWarning(false);
       onCallStart?.();
@@ -94,6 +93,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         const callId = message.call?.id;
         if (callId) {
           setCurrentCallId(callId);
+          setTimeRemaining(HARD_CAP_SECONDS);
           startCallTimers(callId);
         }
       }
