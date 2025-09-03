@@ -88,14 +88,17 @@ export default function Pricing(){
                   {t.bullets.map(b => <li key={b} className="flex gap-2"><span className="text-cyan-400 drop-shadow-[0_0_4px_rgba(0,212,255,0.8)]">✔︎</span><span>{b}</span></li>)}
                 </ul>
                 <div className="mt-auto pt-6">
-                  <a href="#roi" className={clsx(
+                  <a 
                     href="https://cal.com/iulian-boamfa-rjnurb/30min"
                     target="_blank"
                     rel="noopener noreferrer"
+                    className={clsx(
+                      "w-full inline-flex justify-center items-center px-6 py-3 text-base font-semibold rounded-xl transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transform hover:scale-105",
                     popular
                       ? "bg-gradient-to-r from-blue-500 to-violet-500 text-slate-900 ring-blue-300 shadow-[0_0_20px_rgba(56,189,248,0.5)] hover:shadow-[0_0_30px_rgba(56,189,248,0.8)]"
                       : "bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-900 hover:from-cyan-400 hover:to-blue-400 ring-cyan-300 shadow-[0_0_15px_rgba(0,212,255,0.5)] hover:shadow-[0_0_25px_rgba(0,212,255,0.8)]"
-                  )}>
+                    )}
+                  >
                     {getCTAText(t.name)}
                   </a>
                 </div>
