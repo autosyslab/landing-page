@@ -15,22 +15,16 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   apiKey, 
   assistantId, 
   onCallStart,
-  onCallEnd,
-  warningSeconds = 30,
-  warningMessage = "UPS, looks like I gotta go. It has been a real pleasure. Talk soon."
+  onCallEnd
 }) => {
   const [vapi, setVapi] = useState<Vapi | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(60);
-  const [showInactivityWarning, setShowInactivityWarning] = useState(false);
   
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const vapiRef = useRef<Vapi | null>(null);
   const isConnectedRef = useRef(false);
-  const lastSpeechTimeRef = useRef<number>(0);
-  const assistantSpeakingRef = useRef(false);
 
   useEffect(() => {
     const vapiInstance = new Vapi(apiKey);
@@ -39,59 +33,22 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
     // VAPI Event Handlers
     vapiInstance.on('call-start', () => {
-      console.log('🔥 CALL STARTED - Initializing timer and inactivity monitoring');
+      console.log('🔥 CALL STARTED - Starting countdown timer');
       setIsConnected(true);
       isConnectedRef.current = true;
       setIsLoading(false);
       setTimeRemaining(60);
-      setShowInactivityWarning(false);
       
-      // Reset speech tracking
-      const now = Date.now();
-      lastSpeechTimeRef.current = now;
-      
-      // Start countdown timer and inactivity monitoring
+      // Start countdown timer
       startCountdownTimer();
-      startInactivityWarningSystem();
       
       onCallStart?.();
     });
 
     vapiInstance.on('call-end', () => {
-      console.log('📞 CALL ENDED - Cleaning up');
+      console.log('📞 CALL ENDED');
       handleCallEnd();
       onCallEnd?.();
-    });
-
-    // Speech activity detection for warning system
-    vapiInstance.on('speech-start', () => {
-      const now = Date.now();
-      lastSpeechTimeRef.current = now;
-      setShowInactivityWarning(false);
-      console.log('🗣️ User speech detected - hiding warning');
-    });
-
-    vapiInstance.on('speech-end', () => {
-      const now = Date.now();
-      lastSpeechTimeRef.current = now;
-      console.log('🤐 User speech ended - monitoring for warnings');
-    });
-
-    // Track assistant speech to pause warning system
-    vapiInstance.on('message', (message) => {
-      if (message.type === 'assistant-message') {
-        console.log('🤖 Assistant started speaking - pausing warning detection');
-        assistantSpeakingRef.current = true;
-        setShowInactivityWarning(false);
-      }
-    });
-
-    vapiInstance.on('message-end', (message) => {
-      if (message.type === 'assistant-message') {
-        console.log('🤖 Assistant finished speaking - resuming warning detection');
-        assistantSpeakingRef.current = false;
-        lastSpeechTimeRef.current = Date.now();
-      }
     });
 
     vapiInstance.on('error', (error) => {
@@ -135,39 +92,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     }, 1000);
   };
 
-  // Inactivity warning system - shows warnings but doesn't hang up
-  const startInactivityWarningSystem = () => {
-    if (inactivityTimerRef.current) {
-      clearInterval(inactivityTimerRef.current);
-    }
-    
-    console.log('👂 Starting inactivity warning system');
-    
-    inactivityTimerRef.current = setInterval(() => {
-      if (!isConnectedRef.current) return;
-      
-      // Don't show warnings when assistant is speaking
-      if (assistantSpeakingRef.current) {
-        console.log('🤖 Assistant is speaking - skipping warning check');
-        setShowInactivityWarning(false);
-        return;
-      }
-      
-      const now = Date.now();
-      const timeSinceLastSpeech = (now - lastSpeechTimeRef.current) / 1000;
-      
-      console.log(`👂 Inactivity check: ${timeSinceLastSpeech.toFixed(1)}s since last user speech`);
-      
-      // Show warning at 5 seconds of inactivity
-      if (timeSinceLastSpeech >= 5 && timeSinceLastSpeech < 6) {
-        console.log('⚠️ 5 seconds of user inactivity - showing warning');
-        setShowInactivityWarning(true);
-      }
-      
-      // Note: No automatic hangup for inactivity - handled elsewhere
-    }, 1000);
-  };
-
   // Simplified termination function
   const terminateCall = () => {
     console.log('🔚 TERMINATING CALL');
@@ -199,20 +123,14 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       clearInterval(countdownTimerRef.current);
       countdownTimerRef.current = null;
     }
-    if (inactivityTimerRef.current) {
-      clearInterval(inactivityTimerRef.current);
-      inactivityTimerRef.current = null;
-    }
     
     isConnectedRef.current = false;
-    assistantSpeakingRef.current = false;
   };
 
   const handleCallEnd = () => {
     setIsConnected(false);
     setIsLoading(false);
     setTimeRemaining(60);
-    setShowInactivityWarning(false);
     cleanupTimers();
   };
 
@@ -225,8 +143,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const startCall = () => {
     if (vapi && !isConnected && !isLoading) {
       setIsLoading(true);
-      const now = Date.now();
-      lastSpeechTimeRef.current = now;
       vapi.start(assistantId);
     }
   };
@@ -275,13 +191,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
             `}>
               {formatTime(timeRemaining)}
             </div>
-            
-            {/* Inactivity Warning */}
-            {showInactivityWarning && (
-              <div className="mt-2 text-sm text-orange-300 bg-orange-900/50 px-3 py-1 rounded-lg animate-pulse">
-                Keep talking to continue...
-              </div>
-            )}
           </div>
           
           {/* End Call Button */}
