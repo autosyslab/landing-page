@@ -1,6 +1,5 @@
 "use client"
 
-import React from "react";
 import { content } from "../content"
 import RobotCanvas from "./RobotCanvas"
 
@@ -13,7 +12,6 @@ export default function Hero() {
         relative isolate overflow-hidden text-white
         bg-gradient-to-b from-[#032b3a] via-[#039cd0] to-[#00d7ea]
       "
-      aria-labelledby="hero-heading"
     >
       {/* LEFT translucent panel (slightly more transparent) */}
       <div
@@ -34,12 +32,7 @@ export default function Hero() {
           <div className="max-w-2xl">
             <p className="text-cyan-100/90 text-sm font-medium tracking-wider uppercase">{H.eyebrow}</p>
 
-            <h1 
-              id="hero-heading"
-              className="mt-8 leading-[1.1] font-black text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight"
-              role="heading"
-              aria-level={1}
-            >
+            <h1 className="mt-8 leading-[1.1] font-black text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight">
               <span className="block">Meet Your</span>
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-100 via-white to-cyan-200">
                 First AI
@@ -47,7 +40,7 @@ export default function Hero() {
               <span className="block">Employee</span>
             </h1>
 
-            <div className="mt-8 space-y-4 text-white/90 text-lg leading-relaxed max-w-xl" role="region" aria-label="Hero description">
+            <div className="mt-8 space-y-4 text-white/90 text-lg leading-relaxed max-w-xl">
               <p className="font-medium">{H.body1}</p>
               <p className="text-white/75">{H.body2}</p>
             </div>
@@ -55,8 +48,6 @@ export default function Hero() {
             <div className="mt-12">
               <a
                 href="#roi"
-                role="button"
-                aria-describedby="cta-caption"
                 className="
                   inline-flex items-center rounded-2xl px-8 py-4
                   font-bold text-slate-900 text-lg
@@ -68,7 +59,7 @@ export default function Hero() {
               >
                 {H.cta}
               </a>
-              <div id="cta-caption" className="mt-4 text-sm text-white/60 font-medium">{H.caption}</div>
+              <div className="mt-4 text-sm text-white/60 font-medium">{H.caption}</div>
             </div>
           </div>
 

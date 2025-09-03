@@ -3,62 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    
-    <!-- Performance: Preload critical resources -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- Security: Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://prod.spline.design;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      font-src 'self' https://fonts.gstatic.com;
-      img-src 'self' data: https:;
-      media-src 'self' https:;
-      connect-src 'self' https: wss: blob:;
-      worker-src 'self' blob:;
-      frame-src 'self' https://cal.com;
-      object-src 'none';
-      base-uri 'self';
-    ">
-    
-    <!-- Security: Additional headers -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
-    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    
     <title>Meet Your First AI Employee — AutoSys Lab</title>
     <meta name="description" content="Your business deserves an employee that never sleeps. Meet your first AI employee and reclaim hours, revenue, and momentum." />
-    
-    <!-- SEO: Open Graph -->
-    <meta property="og:title" content="Meet Your First AI Employee — AutoSys Lab">
-    <meta property="og:description" content="Your business deserves an employee that never sleeps. Meet your first AI employee and reclaim hours, revenue, and momentum.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://autosyslab.com">
-    
-    <!-- Performance: Resource hints -->
-    <link rel="dns-prefetch" href="https://prod.spline.design">
-    <link rel="dns-prefetch" href="https://cal.com">
-    <link rel="preload" as="style" href="/src/styles/tailwind.css">
-    
-    <!-- Accessibility: Theme color -->
-    <meta name="theme-color" content="#032b3a">
   </head>
   <body>
-    <!-- Accessibility: Skip navigation -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Performance: Intersection Observer polyfill for older browsers -->
-    <script>
-      if (!('IntersectionObserver' in window)) {
-        const script = document.createElement('script');
-        script.src = 'https://polyfill.io/v3/polyfill.min.js?features=IntersectionObserver';
-        document.head.appendChild(script);
-      }
-    </script>
   </body>
 </html>
