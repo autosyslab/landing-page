@@ -32,6 +32,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const isConnectedRef = useRef(false);
   const lastSpeechTimeRef = useRef<number>(0);
   const warningShownRef = useRef(false);
+  const assistantSpeakingRef = useRef(false);
 
   useEffect(() => {
     const vapiInstance = new Vapi(apiKey);
@@ -77,6 +78,23 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       const now = Date.now();
       lastSpeechTimeRef.current = now;
       console.log('🤐 Speech ended - monitoring inactivity from now');
+    });
+
+    // CRITICAL: Track assistant speech to pause inactivity detection
+    vapiInstance.on('message', (message) => {
+      if (message.type === 'assistant-message') {
+        console.log('🤖 Assistant started speaking - pausing inactivity detection');
+        assistantSpeakingRef.current = true;
+        setShowInactivityWarning(false);
+      }
+    });
+
+    vapiInstance.on('message-end', (message) => {
+      if (message.type === 'assistant-message') {
+        console.log('🤖 Assistant finished speaking - resuming inactivity detection');
+        assistantSpeakingRef.current = false;
+        lastSpeechTimeRef.current = Date.now();
+      }
     });
 
     vapiInstance.on('error', (error) => {
@@ -139,20 +157,27 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     inactivityTimerRef.current = setInterval(() => {
       if (!isConnectedRef.current) return;
       
+      // CRITICAL FIX: Don't count inactivity when assistant is speaking
+      if (assistantSpeakingRef.current) {
+        console.log('🤖 Assistant is speaking - skipping inactivity check');
+        setShowInactivityWarning(false);
+        return;
+      }
+      
       const now = Date.now();
       const timeSinceLastSpeech = (now - lastSpeechTimeRef.current) / 1000;
       
-      console.log(`👂 Inactivity check: ${timeSinceLastSpeech.toFixed(1)}s since last speech`);
+      console.log(`👂 User inactivity check: ${timeSinceLastSpeech.toFixed(1)}s since last user speech`);
       
       // Show warning at 5 seconds of inactivity
       if (timeSinceLastSpeech >= 5 && timeSinceLastSpeech < 6) {
-        console.log('⚠️ 5 seconds of inactivity - showing warning');
+        console.log('⚠️ 5 seconds of USER inactivity - showing warning');
         setShowInactivityWarning(true);
       }
       
       // CRITICAL FIX: Auto-hangup at 10 seconds of inactivity
       if (timeSinceLastSpeech >= 10) {
-        console.log('🛑 10 SECONDS OF INACTIVITY - ENDING CALL NOW!');
+        console.log('🛑 10 SECONDS OF USER INACTIVITY - ENDING CALL NOW!');
         terminateCall('inactivity_timeout');
       }
     }, 1000);
@@ -196,6 +221,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     
     isConnectedRef.current = false;
     warningShownRef.current = false;
+    assistantSpeakingRef.current = false;
   };
 
   const handleCallEnd = () => {
