@@ -12,24 +12,24 @@ Configure your Vapi assistant with these exact settings in the Vapi Dashboard:
   "hangupDelay": 1,
   "serverTimeoutSeconds": 60,
   "endCallPhrases": [
-    "Thanks for trying the demo. Ending the call now.",
-    "UPS, looks like I gotta go. It has been a real pleasure. Talk soon.",
     "goodbye",
     "bye",
-    "see you later"
+    "see you later",
+    "end call",
+    "hang up"
   ],
   "backgroundSound": "office",
   "recordingEnabled": false,
   "transcriber": {
     "provider": "deepgram",
     "model": "nova-2",
-    "keywords": ["goodbye", "bye", "end call"]
+    "keywords": ["goodbye", "bye", "end call", "hang up"]
   },
   "customer": {
     "speech": {
       "timeout": {
-        "noInputWarningSeconds": 15,
-        "noInputHangupSeconds": 25,
+        "noInputWarningSeconds": 5,
+        "noInputHangupSeconds": 10,
         "maxCallDurationSeconds": 60
       }
     }
@@ -48,50 +48,54 @@ Configure your Vapi assistant with these exact settings in the Vapi Dashboard:
    - Add all the `endCallPhrases` listed above
    - Enable "End call on phrase detection"
 4. **Set Customer Timeouts** in "Customer Settings":
-   - No input warning: 15 seconds
-   - No input hangup: 25 seconds
+   - No input warning: 5 seconds
+   - No input hangup: 10 seconds
    - Max call duration: 60 seconds
 5. **Save Configuration** and test the setup
 
-### Call Duration Protection System
-This project implements a 4-layer protection system to ensure calls don't exceed 1 minute:
+### Dual Auto-Termination System
+This project implements a comprehensive protection system with two independent termination triggers:
 
-1. **VAPI Server-Side Enforcement**: `maxDurationSeconds: 60` provides platform-level call termination
-2. **Agent Warning System**: Configurable warning delivered to agent before call termination  
-3. **End Call Phrase Detection**: VAPI automatically hangs up when specific phrases are detected
-4. **Client-Side Failsafe Timer**: Backup timer that terminates calls via API after exactly 1 minute
-5. **Inactivity Detection**: Automatically ends calls after 20 seconds of no speech activity
+#### Timer-Based Termination:
+1. **Client-Side Countdown**: 60-second countdown timer (1:00 → 0:59 → ... → 0:00)
+2. **Automatic Hangup**: Call terminates immediately when timer reaches 0:00
+3. **VAPI Server Backup**: `maxDurationSeconds: 60` provides platform-level enforcement
+4. **Visual Feedback**: Real-time countdown display with color warnings
+
+#### Inactivity-Based Termination:
+1. **Speech Activity Monitoring**: Tracks speech events via VAPI transcriber
+2. **5-Second Warning**: Warning message displayed after 5 seconds of silence
+3. **10-Second Hangup**: Automatic call termination after 10 seconds of inactivity
+4. **VAPI Server Integration**: Uses `noInputHangupSeconds: 10` for server-side enforcement
 
 ### Testing Procedures:
 
-1. **Timer Countdown Test**:
+#### Timer-Based Tests:
+1. **Countdown Functionality**:
    - Start a call and verify timer counts down from 1:00 → 0:59 → 0:58... → 0:00
    - Confirm call automatically ends at 0:00
 
-2. **Agent Warning Test**:
-   - Let call run to 30 seconds remaining
-   - Verify agent receives warning message
-   - Confirm call ends gracefully after warning
-
-3. **VAPI Server-Side Test**:
+2. **VAPI Server Backup**:
    - Disable client-side timer temporarily
    - Verify VAPI server terminates call at 60 seconds
 
-4. **End Phrase Test**:
+#### Inactivity-Based Tests:
+3. **Inactivity Warning**:
+   - Start call and remain silent for 5 seconds
+   - Verify warning message appears: "Keep talking to continue..."
+   - Resume speaking and verify warning disappears
+
+4. **Inactivity Termination**:
+   - Start call and remain silent for 10 seconds
+   - Verify automatic call termination due to inactivity
+
+#### Additional Tests:
+5. **End Phrase Detection**:
    - Say "goodbye" or "bye" during call
    - Verify VAPI immediately terminates call
 
-5. **Inactivity Test**:
-   - Start call and remain silent for 25 seconds
-   - Verify automatic termination due to inactivity
+6. **Speech Activity Reset**:
+   - Let call go silent for 4 seconds
+   - Speak before 5-second warning
+   - Verify inactivity timer resets properly
 
-### Features
-- **Dynamic countdown timer** showing remaining demo time (1:00 → 0:00)
-- **Agent warning system** with configurable timing and message
-- **Visual indicators** for time warnings and call status
-- Automatic call termination at 1-minute mark
-- Graceful call endings with agent notification
-- Inactivity detection with 20-second timeout
-- Multiple warning states (time warning, inactivity warning)
-- Call duration tracking and display
-- Graceful fallbacks if API calls fail
