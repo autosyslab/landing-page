@@ -26,19 +26,19 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [currentCallId, setCurrentCallId] = useState<string | null>(null);
   
   // Timer states - simplified to just countdown
-  const [timeRemaining, setTimeRemaining] = useState<number>(180); // 3 minutes
+  const [timeRemaining, setTimeRemaining] = useState<number>(60); // 1 minute
   
   // Refs to avoid stale closure issues
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const warningTriggeredRef = useRef(false);
-  const timeRemainingRef = useRef(180);
+  const timeRemainingRef = useRef(60);
   
   // Inactivity tracking
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null);
   const [inactivityWarning, setInactivityWarning] = useState(false);
 
-  const CALL_DURATION = 180; // 3 minutes in seconds
+  const CALL_DURATION = 60; // 1 minute in seconds
   const INACTIVITY_TIMEOUT = 20_000; // 20 seconds
 
   // Keep timeRemainingRef in sync with timeRemaining state
