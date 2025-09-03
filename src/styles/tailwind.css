@@ -2,10 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Performance: Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Performance: Optimize font loading */
+@layer base {
+  html {
+    font-display: swap;
+  }
+}
+
 /* subtle grid noise & font-smoothing akin to the ZIP */
 html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+/* Accessibility: Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 9999;
+  border-radius: 4px;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Performance: Will-change for animated elements */
+.animate-glow,
+.animate-float,
+.animate-spin,
+.animate-bounce,
+.animate-pulse {
+  will-change: transform, opacity;
+}
+
+/* Performance: Contain layout shifts */
+.robot-container {
+  contain: layout;
 }
 
 @layer utilities {
@@ -13,13 +64,19 @@ html, body {
     0%, 100% { opacity: 0.85; transform: translate3d(0,0,0) scale(1); }
     50%      { opacity: 1;    transform: translate3d(0,-6px,0) scale(1.01); }
   }
-  .animate-glow { animation: glowPulse 6s ease-in-out infinite; }
+  
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-glow { animation: glowPulse 6s ease-in-out infinite; }
+  }
 
   @keyframes floaty {
     0%, 100% { transform: translate3d(0,4px,0) }
     50%      { transform: translate3d(0,-4px,0) }
   }
-  .animate-float { animation: floaty 7s ease-in-out infinite; }
+  
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-float { animation: floaty 7s ease-in-out infinite; }
+  }
 
   @keyframes slideRight {
     0% { transform: translateX(-100%); }
@@ -77,6 +134,17 @@ html, body {
   .section-transition:hover::before {
     opacity: 1;
   }
+}
+
+/* Focus management */
+.focus-visible:focus-visible {
+  outline: 2px solid #06b6d4;
+  outline-offset: 2px;
+}
+
+/* Performance: GPU acceleration for transforms */
+.transform {
+  transform: translateZ(0);
 }
 
 :root { color-scheme: dark; }
