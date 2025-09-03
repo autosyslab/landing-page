@@ -2,6 +2,7 @@
 
 import { content } from "../content"
 import RobotCanvas from "./RobotCanvas"
+import VapiWidget from "./VapiWidget"
 
 export default function Hero() {
   const H = content.hero
@@ -46,19 +47,10 @@ export default function Hero() {
             </div>
 
             <div className="mt-12">
-              <a
-                href="#roi"
-                className="
-                  inline-flex items-center rounded-2xl px-8 py-4
-                  font-bold text-slate-900 text-lg
-                  bg-gradient-to-r from-[#59def2] to-[#6ee7f5] hover:from-[#6ee7f5] hover:to-[#7debf7]
-                  shadow-[0_10px_30px_rgba(89,222,242,0.4)] hover:shadow-[0_15px_35px_rgba(89,222,242,0.5)]
-                  transform hover:scale-105 transition-all duration-200
-                  ring-1 ring-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80
-                "
-              >
-                {H.cta}
-              </a>
+              <VapiWidget
+                apiKey="044b074b-c5e2-4194-b654-37941f249593"
+                assistantId="895bfd75-95b3-49f8-a0a6-bbb60a53ef45"
+              />
               <div className="mt-4 text-sm text-white/60 font-medium">{H.caption}</div>
             </div>
           </div>
