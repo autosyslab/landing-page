@@ -361,6 +361,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   }
 
   return (
+    <>
       {!isConnected ? (
         <div>
           <button
@@ -425,6 +426,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           </button>
         </div>
       )}
+    </>
   );
 };
 
