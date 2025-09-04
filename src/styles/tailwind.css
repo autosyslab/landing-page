@@ -57,6 +57,66 @@ html, body {
   .animate-gentle-fade-out { 
     animation: gentleFadeOut 1s ease-out forwards; 
   }
+
+  /* Cross-platform button enhancements */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* iOS-specific fixes */
+  @supports (-webkit-touch-callout: none) {
+    /* iOS Safari specific styles */
+    input, button {
+      -webkit-appearance: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    button {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+    }
+  }
+  
+  /* Android-specific fixes */
+  @media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: .001dpcm) {
+    /* Android Chrome specific styles */
+    button {
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+    }
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .bg-gradient-to-r {
+      background: #0066cc !important;
+    }
+    
+    .text-white {
+      color: white !important;
+    }
+    
+    .border {
+      border: 2px solid currentColor !important;
+    }
+  }
+  
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-spin,
+    .animate-pulse,
+    .animate-bounce,
+    .animate-glow,
+    .animate-float {
+      animation: none !important;
+    }
+    
+    .transition-all,
+    .transition-colors,
+    .transition-transform,
+    .transition-opacity {
+      transition: none !important;
+    }
+  }
   /* Smooth section transitions */
   .section-transition {
     position: relative;
