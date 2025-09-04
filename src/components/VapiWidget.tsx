@@ -87,8 +87,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [audioSupported, setAudioSupported] = useState<boolean | null>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [showThankYou, setShowThankYou] = useState(false);
-  const [callEndReason, setCallEndReason] = useState<'user' | 'timeout' | 'error' | null>(null);
   
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const vapiRef = useRef<Vapi | null>(null);
@@ -134,7 +132,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         isConnectedRef.current = true;
         setIsLoading(false);
         setTimeRemaining(60);
-        setShowThankYou(false);
         setConnectionError(null);
         
         startCountdownTimer();
@@ -148,51 +145,12 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
       vapiInstance.on('call-end', () => {
         console.log('📞 CALL ENDED NORMALLY');
-        setCallEndReason('timeout'); // Normal ending (usually timeout)
-        setShowThankYou(true);
         handleCallEnd();
         onCallEnd?.();
       });
 
       vapiInstance.on('error', (error) => {
-        
-        // Comprehensive detection for normal call endings vs real errors
-        // Convert entire error object to string for robust checking
-        const errorString = JSON.stringify(error, Object.getOwnPropertyNames(error)).toLowerCase();
-        
-        // Enhanced normal ending indicators
-        const normalEndingIndicators = [
-          'ended', 'timeout', 'hangup', 'terminated', 'inactivity', 
-          'duration', 'maxduration', 'limit', 'ejected', 'meeting has ended',
-          'ejection', 'call completed', 'session ended', 'time limit'
-        ];
-        
-        const isNormalEnding = normalEndingIndicators.some(indicator =>
-          errorString.includes(indicator.toLowerCase())
-        );
-        
-        if (!isNormalEnding) {
-          console.error('❌ VAPI error:', error);
-          let displayMessage = 'Voice call error occurred';
-          
-          if (browserInfo.isIOS && errorString.includes('audio')) {
-            displayMessage = 'iOS audio permission required. Please enable microphone access.';
-          } else if (browserInfo.isAndroid && errorString.includes('permission')) {
-            displayMessage = 'Android microphone permission required.';
-          } else if (errorString.includes('network')) {
-            displayMessage = 'Network connection issue. Please check your internet connection.';
-          }
-          
-          setConnectionError(displayMessage);
-          setCallEndReason('error');
-        } else {
-          // Normal call ending - show thank you
-          console.log('📞 Call ended normally (detected via error event):', error);
-          setCallEndReason('timeout');
-          setShowThankYou(true);
-          setConnectionError(null); // Clear any error state
-        }
-        
+        console.log('📞 Call ended:', error);
         handleCallEnd();
       });
 
@@ -340,8 +298,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   };
 
   const endCall = () => {
-    setCallEndReason('user');
-    setShowThankYou(true);
     terminateCall();
   };
 
@@ -405,7 +361,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   }
 
   return (
-    <>
       {!isConnected ? (
         <div>
           <button
@@ -441,46 +396,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         </div>
       ) : (
         <div className="flex flex-col items-center gap-3">
-          {/* Thank You Message - shown after call ends */}
-          {showThankYou && (
-            <div className="text-center p-8 bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/30">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center mx-auto mb-6 animate-bounce">
-                <span className="text-2xl">✨</span>
-              </div>
-              
-              <h3 className="text-2xl font-bold text-slate-800 mb-3">
-                Thanks for chatting with your future AI employee!
-              </h3>
-              
-              <p className="text-slate-600 mb-6 leading-relaxed">
-                Ready to get your own AI employee working for your business? 
-                Let's discuss how we can save you time and money.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                <a
-                  href="https://cal.com/iulian-boamfa-rjnurb/30min"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-xl px-8 py-4 font-bold text-white bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
-                >
-                  📅 Book Your Strategy Call
-                </a>
-                
-                <button
-                  onClick={() => {
-                    setShowThankYou(false);
-                    setCallEndReason(null);
-                    setConnectionError(null);
-                  }}
-                  className="inline-flex items-center justify-center rounded-xl px-6 py-3 font-medium text-slate-700 bg-slate-200 hover:bg-slate-300 transition-colors duration-200"
-                >
-                  Chat Again
-                </button>
-              </div>
-            </div>
-          )}
-          
           {/* Connection status indicator */}
           <div className="flex items-center gap-2 text-sm text-white/70">
             <Wifi className="w-4 h-4 text-green-400" />
@@ -510,7 +425,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           </button>
         </div>
       )}
-    </>
   );
 };
 
