@@ -156,33 +156,30 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
       vapiInstance.on('error', (error) => {
         
-        // Enhanced detection for normal call endings vs real errors
-        const errorMessage = error?.message || '';
-        const errorMsg = error?.errorMsg || '';
-        const errorType = error?.error?.type || '';
-        const errorTypeMsg = error?.error?.msg || '';
+        // Comprehensive detection for normal call endings vs real errors
+        // Convert entire error object to string for robust checking
+        const errorString = JSON.stringify(error, Object.getOwnPropertyNames(error)).toLowerCase();
         
-        // Check all possible fields for normal call ending indicators
+        // Enhanced normal ending indicators
         const normalEndingIndicators = [
           'ended', 'timeout', 'hangup', 'terminated', 'inactivity', 
-          'duration', 'maxDuration', 'limit', 'ejected', 'Meeting has ended'
+          'duration', 'maxduration', 'limit', 'ejected', 'meeting has ended',
+          'ejection', 'call completed', 'session ended', 'time limit'
         ];
         
-        const isNormalEnding = normalEndingIndicators.some(indicator => 
-          errorMessage.toLowerCase().includes(indicator.toLowerCase()) ||
-          errorMsg.toLowerCase().includes(indicator.toLowerCase()) ||
-          errorTypeMsg.toLowerCase().includes(indicator.toLowerCase())
+        const isNormalEnding = normalEndingIndicators.some(indicator =>
+          errorString.includes(indicator.toLowerCase())
         );
         
         if (!isNormalEnding) {
           console.error('❌ VAPI error:', error);
           let displayMessage = 'Voice call error occurred';
           
-          if (browserInfo.isIOS && errorMessage.includes('audio')) {
+          if (browserInfo.isIOS && errorString.includes('audio')) {
             displayMessage = 'iOS audio permission required. Please enable microphone access.';
-          } else if (browserInfo.isAndroid && errorMessage.includes('permission')) {
+          } else if (browserInfo.isAndroid && errorString.includes('permission')) {
             displayMessage = 'Android microphone permission required.';
-          } else if (errorMessage.includes('network')) {
+          } else if (errorString.includes('network')) {
             displayMessage = 'Network connection issue. Please check your internet connection.';
           }
           
@@ -190,7 +187,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           setCallEndReason('error');
         } else {
           // Normal call ending - show thank you
-          console.log('📞 Call ended normally (detected via error event):', errorMsg || errorMessage);
+          console.log('📞 Call ended normally (detected via error event):', error);
           setCallEndReason('timeout');
           setShowThankYou(true);
           setConnectionError(null); // Clear any error state
