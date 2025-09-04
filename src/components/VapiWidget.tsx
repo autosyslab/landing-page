@@ -88,6 +88,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [callEndReason, setCallEndReason] = useState<'user' | 'timeout' | 'error' | null>(null);
   
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const vapiRef = useRef<Vapi | null>(null);
@@ -146,7 +147,9 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       });
 
       vapiInstance.on('call-end', () => {
-        handleCallEnd(false); // false = not an error
+        console.log('📞 CALL ENDED NORMALLY');
+        setCallEndReason('timeout'); // Normal ending (usually timeout)
+        setShowThankYou(true);
         handleCallEnd();
         onCallEnd?.();
       });
@@ -154,18 +157,34 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       vapiInstance.on('error', (error) => {
         console.error('❌ VAPI error:', error);
         
-        // Platform-specific error handling
-        let errorMessage = 'Voice system error occurred';
+        // Check if this is a real error or just a normal call ending
+        const errorMessage = error?.message || '';
+        const isRealError = !errorMessage.includes('ended') && 
+                           !errorMessage.includes('timeout') && 
+                           !errorMessage.includes('hangup') &&
+                           !errorMessage.includes('terminated');
         
-        if (browserInfo.isIOS && error?.message?.includes('audio')) {
-          errorMessage = 'iOS audio permission required. Please enable microphone access.';
-        } else if (browserInfo.isAndroid && error?.message?.includes('permission')) {
-          errorMessage = 'Android microphone permission required.';
-        } else if (error?.message?.includes('network')) {
-          errorMessage = 'Network connection issue. Please check your internet connection.';
+        if (isRealError) {
+          // Only show error for actual connection/permission issues
+          let displayMessage = 'Voice system error occurred';
+          
+          if (browserInfo.isIOS && errorMessage.includes('audio')) {
+            displayMessage = 'iOS audio permission required. Please enable microphone access.';
+          } else if (browserInfo.isAndroid && errorMessage.includes('permission')) {
+            displayMessage = 'Android microphone permission required.';
+          } else if (errorMessage.includes('network')) {
+            displayMessage = 'Network connection issue. Please check your internet connection.';
+          }
+          
+          setConnectionError(displayMessage);
+          setCallEndReason('error');
+        } else {
+          // Normal call ending - show thank you
+          console.log('📞 Call ended normally (detected via error event)');
+          setCallEndReason('timeout');
+          setShowThankYou(true);
         }
         
-        setConnectionError(errorMessage);
         handleCallEnd();
       });
 
@@ -313,6 +332,8 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   };
 
   const endCall = () => {
+    setCallEndReason('user');
+    setShowThankYou(true);
     terminateCall();
   };
 
