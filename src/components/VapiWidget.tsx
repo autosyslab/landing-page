@@ -441,7 +441,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           </button>
         </div>
       )}
-      }
     </>
   );
 };
