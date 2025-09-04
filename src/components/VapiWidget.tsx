@@ -433,6 +433,46 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         </div>
       ) : (
         <div className="flex flex-col items-center gap-3">
+      {/* Thank You Message - shown after call ends */}
+      {showThankYou && (
+        <div className="text-center p-8 bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/30">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center mx-auto mb-6 animate-bounce">
+            <span className="text-2xl">✨</span>
+          </div>
+          
+          <h3 className="text-2xl font-bold text-slate-800 mb-3">
+            Thanks for chatting with your future AI employee!
+          </h3>
+          
+          <p className="text-slate-600 mb-6 leading-relaxed">
+            Ready to get your own AI employee working for your business? 
+            Let's discuss how we can save you time and money.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+            <a
+              href="https://cal.com/iulian-boamfa-rjnurb/30min"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-xl px-8 py-4 font-bold text-white bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+            >
+              📅 Book Your Strategy Call
+            </a>
+            
+            <button
+              onClick={() => {
+                setShowThankYou(false);
+                setCallEndReason(null);
+                setConnectionError(null);
+              }}
+              className="inline-flex items-center justify-center rounded-xl px-6 py-3 font-medium text-slate-700 bg-slate-200 hover:bg-slate-300 transition-colors duration-200"
+            >
+              Chat Again
+            </button>
+          </div>
+        </div>
+      )}
+    </>
           {/* Connection status indicator */}
           <div className="flex items-center gap-2 text-sm text-white/70">
             <Wifi className="w-4 h-4 text-green-400" />
