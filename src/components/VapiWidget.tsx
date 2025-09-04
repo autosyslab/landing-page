@@ -87,6 +87,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [audioSupported, setAudioSupported] = useState<boolean | null>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [showThankYou, setShowThankYou] = useState(false);
   
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const vapiRef = useRef<Vapi | null>(null);
@@ -132,6 +133,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         isConnectedRef.current = true;
         setIsLoading(false);
         setTimeRemaining(60);
+        setShowThankYou(false);
         setConnectionError(null);
         
         startCountdownTimer();
@@ -152,7 +154,12 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       vapiInstance.on('error', (error) => {
         console.error('❌ VAPI error:', error);
         
-        // Platform-specific error handling
+        // Only show error if it's not a normal call termination
+        if (error?.type !== 'call-ended' && error?.message !== 'Call ended') {
+          setConnectionError('Connection lost. Please try again.');
+        }
+        
+        handleCallEnd(true); // true = it was an error
         let errorMessage = 'Voice system error occurred';
         
         if (browserInfo.isIOS && error?.message?.includes('audio')) {
