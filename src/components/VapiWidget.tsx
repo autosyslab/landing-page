@@ -472,7 +472,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           </div>
         </div>
       )}
-    </>
           {/* Connection status indicator */}
           <div className="flex items-center gap-2 text-sm text-white/70">
             <Wifi className="w-4 h-4 text-green-400" />
