@@ -378,7 +378,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   return (
     <>
       {!isConnected ? (
-        <div className="text-center">
+        <div>
           <button
             onClick={startCall}
             disabled={isLoading || !vapi || audioSupported !== true}

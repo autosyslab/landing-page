@@ -53,7 +53,7 @@ export default function Hero() {
                 warningSeconds={30}
                 warningMessage="UPS, looks like I gotta go. It has been a real pleasure. Talk soon."
               />
-              <div className="mt-4 text-sm text-white/60 font-medium text-center">{H.caption}</div>
+              <div className="mt-4 text-sm text-white/60 font-medium">{H.caption}</div>
             </div>
           </div>
 
