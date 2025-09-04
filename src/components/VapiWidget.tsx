@@ -155,18 +155,26 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       });
 
       vapiInstance.on('error', (error) => {
-        console.error('❌ VAPI error:', error);
         
-        // Check if this is a real error or just a normal call ending
+        // Enhanced detection for normal call endings vs real errors
         const errorMessage = error?.message || '';
-        const isRealError = !errorMessage.includes('ended') && 
-                           !errorMessage.includes('timeout') && 
-                           !errorMessage.includes('hangup') &&
-                           !errorMessage.includes('terminated');
+        const errorMsg = error?.errorMsg || '';
+        const errorType = error?.error?.type || '';
+        const errorTypeMsg = error?.error?.msg || '';
         
-        if (isRealError) {
-          // Only show error for actual connection/permission issues
-          let displayMessage = 'Voice system error occurred';
+        // Check all possible fields for normal call ending indicators
+        const normalEndingIndicators = [
+          'ended', 'timeout', 'hangup', 'terminated', 'inactivity', 
+          'duration', 'maxDuration', 'limit', 'ejected', 'Meeting has ended'
+        ];
+        
+        const isNormalEnding = normalEndingIndicators.some(indicator => 
+          errorMessage.toLowerCase().includes(indicator.toLowerCase()) ||
+          errorMsg.toLowerCase().includes(indicator.toLowerCase()) ||
+        if (!isNormalEnding) {
+          errorTypeMsg.toLowerCase().includes(indicator.toLowerCase())
+          console.error('❌ VAPI error:', error);
+        );
           
           if (browserInfo.isIOS && errorMessage.includes('audio')) {
             displayMessage = 'iOS audio permission required. Please enable microphone access.';
@@ -180,9 +188,10 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           setCallEndReason('error');
         } else {
           // Normal call ending - show thank you
-          console.log('📞 Call ended normally (detected via error event)');
+          console.log('📞 Call ended normally (detected via error event):', errorMsg || errorMessage);
           setCallEndReason('timeout');
           setShowThankYou(true);
+          setConnectionError(null); // Clear any error state
         }
         
         handleCallEnd();
