@@ -146,7 +146,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       });
 
       vapiInstance.on('call-end', () => {
-        console.log('📞 CALL ENDED');
+        handleCallEnd(false); // false = not an error
         handleCallEnd();
         onCallEnd?.();
       });
@@ -154,12 +154,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       vapiInstance.on('error', (error) => {
         console.error('❌ VAPI error:', error);
         
-        // Only show error if it's not a normal call termination
-        if (error?.type !== 'call-ended' && error?.message !== 'Call ended') {
-          setConnectionError('Connection lost. Please try again.');
-        }
-        
-        handleCallEnd(true); // true = it was an error
+        // Platform-specific error handling
         let errorMessage = 'Voice system error occurred';
         
         if (browserInfo.isIOS && error?.message?.includes('audio')) {
@@ -446,6 +441,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           </button>
         </div>
       )}
+      }
     </>
   );
 };
