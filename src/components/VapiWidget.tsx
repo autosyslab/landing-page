@@ -367,16 +367,18 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           <button
             onClick={startCall}
             disabled={isLoading || !vapi || audioSupported !== true}
+            aria-label="Start voice call with AI employee"
+            aria-busy={isLoading}
             className={`${getButtonClasses()} disabled:opacity-70 disabled:cursor-not-allowed`}
           >
             {isLoading ? (
               <>
-                <div className="w-5 h-5 border-2 border-slate-700 border-t-transparent rounded-full animate-spin mr-3" />
-                Connecting...
+                <div className="w-5 h-5 border-2 border-slate-700 border-t-transparent rounded-full animate-spin mr-3" aria-hidden="true" />
+                <span>Connecting...</span>
               </>
             ) : (
               <>
-                <Phone className="w-5 h-5 mr-3" />
+                <Phone className="w-5 h-5 mr-3" aria-hidden="true" />
                 Meet Your AI Employee Now →
               </>
             )}
@@ -398,30 +400,41 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       ) : (
         <div className="flex flex-col items-center gap-3">
           {/* Connection status indicator */}
-          <div className="flex items-center gap-2 text-sm text-white/70">
-            <Wifi className="w-4 h-4 text-green-400" />
+          <div
+            className="flex items-center gap-2 text-sm text-white/70"
+            role="status"
+            aria-label="Voice call connected"
+          >
+            <Wifi className="w-4 h-4 text-green-400" aria-hidden="true" />
             <span>Connected</span>
           </div>
-          
+
           {/* Countdown Timer Display */}
           <div className="text-center">
             <div className="text-sm text-white/70 mb-1">Demo Time Remaining</div>
-            <div className={`
-              text-2xl font-bold px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-300
-              ${timeRemaining <= 10 ? 'text-red-300 bg-red-900/50 animate-pulse ring-2 ring-red-400/50' : 
-                timeRemaining <= 30 ? 'text-yellow-300 bg-yellow-900/40' : 
-                'text-white bg-black/20'}
-            `}>
+            <div
+              className={`
+                text-2xl font-bold px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-300
+                ${timeRemaining <= 10 ? 'text-red-300 bg-red-900/50 animate-pulse ring-2 ring-red-400/50' :
+                  timeRemaining <= 30 ? 'text-yellow-300 bg-yellow-900/40' :
+                  'text-white bg-black/20'}
+              `}
+              role="timer"
+              aria-live="polite"
+              aria-atomic="true"
+              aria-label={`${Math.floor(timeRemaining / 60)} minutes and ${timeRemaining % 60} seconds remaining`}
+            >
               {formatTime(timeRemaining)}
             </div>
           </div>
-          
+
           {/* End Call Button */}
           <button
             onClick={endCall}
+            aria-label="End voice call"
             className={getButtonClasses(true)}
           >
-            <PhoneOff className="w-5 h-5 mr-3" />
+            <PhoneOff className="w-5 h-5 mr-3" aria-hidden="true" />
             End Call
           </button>
         </div>

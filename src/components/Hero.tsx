@@ -15,6 +15,12 @@ export default function Hero() {
         bg-gradient-to-b from-[#032b3a] via-[#039cd0] to-[#00d7ea]
       "
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-cyan-500 focus:text-white focus:rounded-lg focus:top-4 focus:left-4"
+      >
+        Skip to main content
+      </a>
       {/* LEFT translucent panel (slightly more transparent) */}
       <div
         aria-hidden
