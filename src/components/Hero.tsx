@@ -3,6 +3,7 @@
 import { content } from "../content"
 import RobotCanvas from "./RobotCanvas"
 import VapiWidget from "./VapiWidget"
+import config from "../utils/config"
 
 export default function Hero() {
   const H = content.hero
@@ -47,16 +48,10 @@ export default function Hero() {
             </div>
 
             <div className="mt-12">
-              {(() => {
-                const vapiApiKey = import.meta.env.VITE_VAPI_API_KEY;
-                const vapiAssistantId = import.meta.env.VITE_VAPI_ASSISTANT_ID;
-
-                if (!vapiApiKey || !vapiAssistantId) {
-                  console.error('⚠️ VAPI credentials missing!');
-                }
-
-                return <VapiWidget apiKey={vapiApiKey} assistantId={vapiAssistantId} />;
-              })()}
+              <VapiWidget
+                apiKey={config.vapi.apiKey}
+                assistantId={config.vapi.assistantId}
+              />
               <div className="mt-4 text-sm text-white/60 font-medium">{H.caption}</div>
             </div>
           </div>
