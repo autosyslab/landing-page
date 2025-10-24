@@ -54,6 +54,30 @@ function Footer() {
             </a>
           </div>
 
+          {/* Legal Links */}
+          <div className="flex items-center gap-4 text-sm">
+            <a
+              href="/privacy-policy"
+              className="text-slate-400 hover:text-white transition-colors duration-200"
+            >
+              Privacy Policy
+            </a>
+            <span className="text-slate-600">•</span>
+            <a
+              href="/terms-of-service"
+              className="text-slate-400 hover:text-white transition-colors duration-200"
+            >
+              Terms of Service
+            </a>
+            <span className="text-slate-600">•</span>
+            <a
+              href="/cookie-policy"
+              className="text-slate-400 hover:text-white transition-colors duration-200"
+            >
+              Cookie Policy
+            </a>
+          </div>
+
           {/* Copyright */}
           <div className="text-slate-500 text-sm">
             © 2025 AutoSys Lab. All rights reserved.
