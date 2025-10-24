@@ -5,7 +5,6 @@ import { fmtCurrency } from "../lib/format";
 import { TrendingUp, Clock, Users, Zap, Target, DollarSign, Sparkles } from "lucide-react";
 import ROIGrowthBar from './ROIGrowthBar';
 import SavingsTicker from './SavingsTicker';
-import ROIPDFExport from './ROIPDFExport';
 
 function ROICalculator(){
   const C = content.roi;
@@ -270,21 +269,8 @@ function ROICalculator(){
                   />
                 </div>
 
-                {/* NEW: PDF Export Button */}
-                <div className={`transform transition-all duration-700 ease-out ${ctaVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '400ms' }}>
-                  <ROIPDFExport
-                    hoursSaved={out.hoursSaved}
-                    monthlySavings={out.monthlySavings}
-                    annualSavings={out.annual}
-                    monthlyHours={typeof monthlyHours === 'number' ? monthlyHours : 0}
-                    hourlyCost={typeof hourlyCost === 'number' ? hourlyCost : 0}
-                    employees={typeof employees === 'number' ? employees : 0}
-                    coverage={coverage}
-                  />
-                </div>
-
                 {/* Existing CTA */}
-                <div className={`p-6 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100 transform transition-all duration-700 ease-out ${ctaVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`} style={{ transitionDelay: '600ms' }}>
+                <div className={`p-6 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100 transform transition-all duration-700 ease-out ${ctaVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`} style={{ transitionDelay: '400ms' }}>
                   <div className="flex items-center justify-between gap-6">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
