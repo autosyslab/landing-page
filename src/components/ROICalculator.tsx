@@ -4,7 +4,7 @@ import { computeROI } from "../lib/roi";
 import { fmtCurrency } from "../lib/format";
 import { TrendingUp, Clock, Users, Zap, Target, DollarSign, Sparkles } from "lucide-react";
 
-export default function ROICalculator(){
+function ROICalculator(){
   const C = content.roi;
   const [monthlyHours, setMonthlyHours] = useState<number | ''>(C.defaults.monthlyHours);
   const [hourlyCost, setHourlyCost] = useState<number | ''>(C.defaults.hourlyCost);
@@ -368,3 +368,5 @@ function AnimatedResultRow({ icon, label, value, unit, color, bgColor, delay, is
     </div>
   );
 }
+
+export default ROICalculator;

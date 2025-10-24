@@ -1,6 +1,6 @@
 import { content } from "../content";
 
-export default function Stats(){
+function Stats(){
   const S = content.stats;
   return (
     <section className="bg-gradient-to-b from-white via-slate-50 via-slate-200 via-slate-400 via-slate-600 via-slate-700 via-slate-800 to-[#0b1320] text-white">
@@ -34,3 +34,5 @@ export default function Stats(){
     </section>
   );
 }
+
+export default Stats;

@@ -3,7 +3,7 @@ import clsx from "clsx";
 import React from 'react';
 import { Lock, FileText, Play, Zap, Settings, TrendingUp, Sparkles } from 'lucide-react';
 
-export default function Pricing(){
+function Pricing(){
   const { heading, sub, tiers } = content.pricing;
   const data = [tiers.starter, tiers.growth, tiers.elite] as const;
 
@@ -284,3 +284,5 @@ function VaultVisual() {
     </div>
   );
 }
+
+export default Pricing;
