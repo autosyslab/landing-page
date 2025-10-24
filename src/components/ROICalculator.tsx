@@ -3,6 +3,9 @@ import { content } from "../content";
 import { computeROI } from "../lib/roi";
 import { fmtCurrency } from "../lib/format";
 import { TrendingUp, Clock, Users, Zap, Target, DollarSign, Sparkles } from "lucide-react";
+import ROIGrowthBar from './ROIGrowthBar';
+import SavingsTicker from './SavingsTicker';
+import ROIPDFExport from './ROIPDFExport';
 
 function ROICalculator(){
   const C = content.roi;
@@ -211,15 +214,15 @@ function ROICalculator(){
                 </p>
               </div>
             ) : (
-              <div className="w-full">
+              <div className="w-full space-y-6">
                 <div className="flex items-center gap-3 mb-8">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center animate-pulse">
                     <TrendingUp className="w-5 h-5 text-white" />
                   </div>
                   <h3 className="text-xl font-bold text-slate-800">Your Automation Impact</h3>
                 </div>
-                
-                <AnimatedResultRow 
+
+                <AnimatedResultRow
                   icon="⏰"
                   label="Hours You'll Get Back Each Month"
                   value={`${out.hoursSaved.toLocaleString()}`}
@@ -228,8 +231,8 @@ function ROICalculator(){
                   bgColor="bg-blue-50"
                   delay={0}
                 />
-                
-                <AnimatedResultRow 
+
+                <AnimatedResultRow
                   icon="💰"
                   label="Money Back In Your Pocket Monthly"
                   value={fmtCurrency(out.monthlySavings)}
@@ -238,8 +241,8 @@ function ROICalculator(){
                   bgColor="bg-green-50"
                   delay={200}
                 />
-                
-                <AnimatedResultRow 
+
+                <AnimatedResultRow
                   icon="🚀"
                   label="Your Annual Financial Gain"
                   value={fmtCurrency(out.annual)}
@@ -250,11 +253,38 @@ function ROICalculator(){
                   isHighlight
                 />
 
-                <div className={`
-                  mt-8 p-6 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100
-                  transform transition-all duration-700 ease-out
-                  ${ctaVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}
-                `}>
+                {/* NEW: Animated ROI Growth Bar */}
+                <div className={`transform transition-all duration-700 ease-out ${ctaVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+                  <ROIGrowthBar
+                    coverage={coverage}
+                    hoursSaved={out.hoursSaved}
+                    maxPotentialHours={typeof monthlyHours === 'number' && typeof employees === 'number' ? monthlyHours * employees : 0}
+                  />
+                </div>
+
+                {/* NEW: Savings Ticker */}
+                <div className={`transform transition-all duration-700 ease-out ${ctaVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '200ms' }}>
+                  <SavingsTicker
+                    monthlySavings={out.monthlySavings}
+                    isActive={ctaVisible}
+                  />
+                </div>
+
+                {/* NEW: PDF Export Button */}
+                <div className={`transform transition-all duration-700 ease-out ${ctaVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '400ms' }}>
+                  <ROIPDFExport
+                    hoursSaved={out.hoursSaved}
+                    monthlySavings={out.monthlySavings}
+                    annualSavings={out.annual}
+                    monthlyHours={typeof monthlyHours === 'number' ? monthlyHours : 0}
+                    hourlyCost={typeof hourlyCost === 'number' ? hourlyCost : 0}
+                    employees={typeof employees === 'number' ? employees : 0}
+                    coverage={coverage}
+                  />
+                </div>
+
+                {/* Existing CTA */}
+                <div className={`p-6 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100 transform transition-all duration-700 ease-out ${ctaVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`} style={{ transitionDelay: '600ms' }}>
                   <div className="flex items-center justify-between gap-6">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
@@ -264,7 +294,7 @@ function ROICalculator(){
                       <p className="text-sm text-slate-600">These savings are waiting for you. Let's build your automation solution.</p>
                     </div>
                     <div className="flex-shrink-0">
-                      <a 
+                      <a
                         href="https://cal.com/iulian-boamfa-rjnurb/30min"
                         target="_blank"
                         rel="noopener noreferrer"
