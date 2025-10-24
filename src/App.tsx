@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import Hero from "./components/Hero";
 import ErrorBoundary from "./components/ErrorBoundary";
+import CookieConsent from "./components/CookieConsent";
 
 // Lazy load components that are below the fold
 const ROICalculator = lazy(() => import("./components/ROICalculator"));
@@ -46,6 +47,7 @@ export default function App(){
           <Footer />
         </Suspense>
       </div>
+      <CookieConsent />
     </ErrorBoundary>
   );
 }
