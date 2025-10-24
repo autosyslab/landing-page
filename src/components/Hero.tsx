@@ -47,12 +47,16 @@ export default function Hero() {
             </div>
 
             <div className="mt-12">
-              <VapiWidget
-                apiKey="044b074b-c5e2-4194-b654-37941f249593"
-                assistantId="895bfd75-95b3-49f8-a0a6-bbb60a53ef45"
-                warningSeconds={30}
-                warningMessage="UPS, looks like I gotta go. It has been a real pleasure. Talk soon."
-              />
+              {(() => {
+                const vapiApiKey = import.meta.env.VITE_VAPI_API_KEY;
+                const vapiAssistantId = import.meta.env.VITE_VAPI_ASSISTANT_ID;
+
+                if (!vapiApiKey || !vapiAssistantId) {
+                  console.error('⚠️ VAPI credentials missing!');
+                }
+
+                return <VapiWidget apiKey={vapiApiKey} assistantId={vapiAssistantId} />;
+              })()}
               <div className="mt-4 text-sm text-white/60 font-medium">{H.caption}</div>
             </div>
           </div>
