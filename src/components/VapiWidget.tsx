@@ -88,18 +88,13 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const initAttempts = useRef(0);
   const maxInitAttempts = 3;
 
-  // Check audio support and permissions on component mount
+  // Check audio support on component mount (but NOT permissions)
   useEffect(() => {
     const initAudioCheck = async () => {
       const supported = await checkAudioSupport();
       setAudioSupported(supported);
-      
-      if (supported) {
-        // Pre-request permissions on user interaction for better UX
-        // This helps especially on iOS where permissions are strict
-        const hasPermission = await requestMicrophonePermission();
-        setPermissionGranted(hasPermission);
-      }
+      // Do NOT request microphone permission here - only check support
+      // Permission will be requested when user clicks "Start Conversation"
     };
 
     initAudioCheck();
@@ -198,11 +193,12 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   }, []);
 
   // Initialize VAPI when audio support is confirmed
+  // No longer dependent on permissionGranted since we request it on button click
   useEffect(() => {
-    if (audioSupported === true && permissionGranted === true) {
+    if (audioSupported === true) {
       initializeVapi();
     }
-  }, [audioSupported, permissionGranted, initializeVapi]);
+  }, [audioSupported, initializeVapi]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -221,24 +217,25 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const startCall = async () => {
     if (!vapi || isConnected || isLoading) return;
 
+    // Request microphone permission ONLY when user clicks the button
+    setIsLoading(true);
+    setConnectionError(null);
+
+    // Request microphone permission on button click
+    const hasPermission = await requestMicrophonePermission();
+    if (!hasPermission) {
+      setConnectionError('Microphone permission is required for voice calls');
+      setPermissionGranted(false);
+      setIsLoading(false);
+      return;
+    }
+    setPermissionGranted(true);
+
     // iOS requires user interaction to start audio
     if (browserInfo.isIOS) {
       await resumeAudioContextIfNeeded();
     }
 
-    // Final permission check before starting call
-    if (!permissionGranted) {
-      const hasPermission = await requestMicrophonePermission();
-      if (!hasPermission) {
-        setConnectionError('Microphone permission is required for voice calls');
-        return;
-      }
-      setPermissionGranted(true);
-    }
-
-    setIsLoading(true);
-    setConnectionError(null);
-    
     try {
       vapi.start(assistantId);
     } catch (error) {
