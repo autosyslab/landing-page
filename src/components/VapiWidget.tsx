@@ -3,7 +3,6 @@ import Vapi from '@vapi-ai/web';
 import { Phone, PhoneOff, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
 
 interface VapiWidgetProps {
-  apiKey: string;
   assistantId: string;
   onCallStart?: () => void;
   onCallEnd?: () => void;
@@ -73,9 +72,8 @@ const requestMicrophonePermission = async (): Promise<boolean> => {
   }
 };
 
-const VapiWidget: React.FC<VapiWidgetProps> = ({ 
-  apiKey, 
-  assistantId, 
+const VapiWidget: React.FC<VapiWidgetProps> = ({
+  assistantId,
   onCallStart,
   onCallEnd
 }) => {
@@ -120,6 +118,21 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
     try {
       setConnectionError(null);
+
+      // Fetch API key from serverless function
+      const tokenResponse = await fetch('/.netlify/functions/get-vapi-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to retrieve API credentials');
+      }
+
+      const { apiKey } = await tokenResponse.json();
+
       const vapiInstance = new Vapi(apiKey);
       setVapi(vapiInstance);
       vapiRef.current = vapiInstance;
@@ -173,7 +186,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         setTimeout(initializeVapi, retryDelay);
       }
     }
-  }, [apiKey, onCallStart, onCallEnd, browserInfo]);
+  }, [onCallStart, onCallEnd, browserInfo]);
 
   // iOS-specific audio context handling
   const resumeAudioContextIfNeeded = useCallback(async () => {

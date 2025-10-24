@@ -1,6 +1,5 @@
 interface AppConfig {
   vapi: {
-    apiKey: string;
     assistantId: string;
   };
   isDevelopment: boolean;
@@ -24,7 +23,6 @@ function getEnvVar(key: string, required: boolean = true): string {
 
 export const config: AppConfig = {
   vapi: {
-    apiKey: getEnvVar('VITE_VAPI_API_KEY', true),
     assistantId: getEnvVar('VITE_VAPI_ASSISTANT_ID', true),
   },
   isDevelopment: import.meta.env.DEV,
@@ -32,8 +30,8 @@ export const config: AppConfig = {
 };
 
 if (config.isProduction) {
-  if (!config.vapi.apiKey || !config.vapi.assistantId) {
-    console.error('❌ CRITICAL: Missing VAPI credentials in production!');
+  if (!config.vapi.assistantId) {
+    console.error('❌ CRITICAL: Missing VAPI assistant ID in production!');
   }
 }
 

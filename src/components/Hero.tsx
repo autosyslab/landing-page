@@ -55,7 +55,6 @@ export default function Hero() {
 
             <div className="mt-12">
               <VapiWidget
-                apiKey={config.vapi.apiKey}
                 assistantId={config.vapi.assistantId}
               />
               <div className="mt-4 text-sm text-white/60 font-medium">{H.caption}</div>
