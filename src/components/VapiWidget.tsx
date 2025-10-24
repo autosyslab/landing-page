@@ -6,8 +6,6 @@ interface VapiWidgetProps {
   assistantId: string;
   onCallStart?: () => void;
   onCallEnd?: () => void;
-  warningSeconds?: number;
-  warningMessage?: string;
 }
 
 // Browser and device detection utilities
@@ -80,13 +78,11 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [vapi, setVapi] = useState<Vapi | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(60);
   const [browserInfo] = useState(getBrowserInfo());
   const [audioSupported, setAudioSupported] = useState<boolean | null>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  
-  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const vapiRef = useRef<Vapi | null>(null);
   const isConnectedRef = useRef(false);
   const initAttempts = useRef(0);
@@ -140,14 +136,12 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
       // Enhanced event handlers with platform-specific considerations
       vapiInstance.on('call-start', () => {
-        console.log('🔥 CALL STARTED - Starting countdown timer');
+        console.log('🔥 CALL STARTED');
         setIsConnected(true);
         isConnectedRef.current = true;
         setIsLoading(false);
-        setTimeRemaining(60);
         setConnectionError(null);
-        
-        startCountdownTimer();
+
         onCallStart?.();
 
         // iOS-specific: Resume audio context if suspended
@@ -214,70 +208,14 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   useEffect(() => {
     return () => {
       vapiRef.current?.stop();
-      cleanupTimers();
+      isConnectedRef.current = false;
     };
   }, []);
-
-  const startCountdownTimer = () => {
-    if (countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current);
-    }
-    
-    console.log('⏰ Starting 60-second countdown timer');
-    
-    countdownTimerRef.current = setInterval(() => {
-      setTimeRemaining(prev => {
-        const newTime = prev - 1;
-        
-        if (newTime <= 0) {
-          console.log('🛑 TIMER REACHED ZERO - ENDING CALL NOW!');
-          terminateCall();
-          return 0;
-        }
-        
-        return newTime;
-      });
-    }, 1000);
-  };
-
-  const terminateCall = () => {
-    console.log('🔚 TERMINATING CALL');
-    
-    if (!isConnectedRef.current) {
-      return;
-    }
-    
-    cleanupTimers();
-    
-    if (vapiRef.current) {
-      try {
-        vapiRef.current.stop();
-      } catch (error) {
-        console.error('❌ Error calling vapi.stop():', error);
-      }
-    }
-  };
-
-  const cleanupTimers = () => {
-    if (countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
-    
-    isConnectedRef.current = false;
-  };
 
   const handleCallEnd = () => {
     setIsConnected(false);
     setIsLoading(false);
-    setTimeRemaining(60);
-    cleanupTimers();
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    isConnectedRef.current = false;
   };
 
   const startCall = async () => {
@@ -311,7 +249,15 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   };
 
   const endCall = () => {
-    terminateCall();
+    if (!isConnectedRef.current || !vapiRef.current) {
+      return;
+    }
+
+    try {
+      vapiRef.current.stop();
+    } catch (error) {
+      console.error('Error stopping call:', error);
+    }
   };
 
   // Platform-specific styling classes
@@ -411,34 +357,15 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center gap-4">
           {/* Connection status indicator */}
           <div
-            className="flex items-center gap-2 text-sm text-white/70"
+            className="flex items-center gap-2 text-sm text-white/90"
             role="status"
             aria-label="Voice call connected"
           >
-            <Wifi className="w-4 h-4 text-green-400" aria-hidden="true" />
-            <span>Connected</span>
-          </div>
-
-          {/* Countdown Timer Display */}
-          <div className="text-center">
-            <div className="text-sm text-white/70 mb-1">Demo Time Remaining</div>
-            <div
-              className={`
-                text-2xl font-bold px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-300
-                ${timeRemaining <= 10 ? 'text-red-300 bg-red-900/50 animate-pulse ring-2 ring-red-400/50' :
-                  timeRemaining <= 30 ? 'text-yellow-300 bg-yellow-900/40' :
-                  'text-white bg-black/20'}
-              `}
-              role="timer"
-              aria-live="polite"
-              aria-atomic="true"
-              aria-label={`${Math.floor(timeRemaining / 60)} minutes and ${timeRemaining % 60} seconds remaining`}
-            >
-              {formatTime(timeRemaining)}
-            </div>
+            <Wifi className="w-5 h-5 text-green-400 animate-pulse" aria-hidden="true" />
+            <span className="font-medium">Call in Progress</span>
           </div>
 
           {/* End Call Button */}
