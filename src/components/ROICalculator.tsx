@@ -271,20 +271,20 @@ function ROICalculator(){
 
                 {/* Existing CTA */}
                 <div className={`p-6 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100 transform transition-all duration-700 ease-out ${ctaVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`} style={{ transitionDelay: '400ms' }}>
-                  <div className="flex items-center justify-between gap-6">
-                    <div className="flex-1">
+                  <div className="flex flex-col gap-4">
+                    <div>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-lg">⚡</span>
                         <span className="font-bold text-slate-800">Ready to make this real?</span>
                       </div>
                       <p className="text-sm text-slate-600">These savings are waiting for you. Let's build your automation solution.</p>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="w-full">
                       <a
                         href="https://cal.com/iulian-boamfa-rjnurb/30min"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group relative overflow-hidden inline-flex items-center rounded-xl px-6 py-3 font-bold text-white bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                        className="group relative overflow-hidden inline-flex items-center justify-center rounded-xl px-6 py-3 font-bold text-white bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 w-full sm:w-auto"
                       >
                         <span className="relative z-10 flex items-center gap-2">
                           <span>Start My Automation</span>
