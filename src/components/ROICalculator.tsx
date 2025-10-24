@@ -50,7 +50,7 @@ export default function ROICalculator(){
 
         <div className="mt-12 grid lg:grid-cols-2 gap-10">
           {/* Left: Enhanced Inputs */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-6 sm:p-8">
+          <form onSubmit={(e) => { e.preventDefault(); calc(); }} className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-6 sm:p-8">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
                 <Target className="w-5 h-5 text-white" />
@@ -58,45 +58,48 @@ export default function ROICalculator(){
               <h3 className="text-xl font-bold text-slate-800">Calculate Your Transformation</h3>
             </div>
 
-            <EnhancedInput 
+            <EnhancedInput
+              id="monthly-hours"
               icon={<Clock className="w-4 h-4 text-cyan-600" />}
               label="Hours wasted on manual tasks monthly"
               description="Time your team loses to repetitive work"
             >
-              <input 
-                type="number" 
-                min={0} 
-                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white" 
-                value={monthlyHours} 
-                onChange={e=>setMonthlyHours(e.target.value === '' ? '' : +e.target.value)} 
+              <input
+                type="number"
+                min={0}
+                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white"
+                value={monthlyHours}
+                onChange={e=>setMonthlyHours(e.target.value === '' ? '' : +e.target.value)}
               />
             </EnhancedInput>
 
-            <EnhancedInput 
+            <EnhancedInput
+              id="hourly-cost"
               icon={<DollarSign className="w-4 h-4 text-cyan-600" />}
               label="Cost per hour (including benefits)"
               description="True hourly cost of your workforce"
             >
-              <input 
-                type="number" 
-                min={0} 
-                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white" 
-                value={hourlyCost} 
-                onChange={e=>setHourlyCost(e.target.value === '' ? '' : +e.target.value)} 
+              <input
+                type="number"
+                min={0}
+                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white"
+                value={hourlyCost}
+                onChange={e=>setHourlyCost(e.target.value === '' ? '' : +e.target.value)}
               />
             </EnhancedInput>
 
-            <EnhancedInput 
+            <EnhancedInput
+              id="employees"
               icon={<Users className="w-4 h-4 text-cyan-600" />}
               label="Team members affected"
               description="People who'll benefit from automation"
             >
-              <input 
-                type="number" 
-                min={0} 
-                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white" 
-                value={employees} 
-                onChange={e=>setEmployees(e.target.value === '' ? '' : +e.target.value)} 
+              <input
+                type="number"
+                min={0}
+                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white"
+                value={employees}
+                onChange={e=>setEmployees(e.target.value === '' ? '' : +e.target.value)}
               />
             </EnhancedInput>
 
@@ -111,18 +114,24 @@ export default function ROICalculator(){
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
                         <Zap className="w-4 h-4 text-white" />
                       </div>
-                      <label className="font-bold text-slate-800 text-lg">Automation Impact</label>
+                      <label htmlFor="automation-coverage" className="font-bold text-slate-800 text-lg">Automation Impact</label>
                     </div>
                     <span className="text-purple-600 font-bold text-2xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent drop-shadow-sm">{coverage}%</span>
                   </div>
-                  
+
                   <div className="relative mb-4">
-                    <input 
-                      type="range" 
-                      min={10} 
-                      max={95} 
-                      value={coverage} 
-                      onChange={e=>setCoverage(+e.target.value)} 
+                    <input
+                      id="automation-coverage"
+                      type="range"
+                      min={10}
+                      max={95}
+                      value={coverage}
+                      onChange={e=>setCoverage(+e.target.value)}
+                      aria-label="Automation coverage percentage"
+                      aria-valuemin={10}
+                      aria-valuemax={95}
+                      aria-valuenow={coverage}
+                      aria-valuetext={`${coverage} percent`}
                       className="w-full h-3 bg-gradient-to-r from-slate-200 to-cyan-100 rounded-lg appearance-none slider shadow-inner hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-cyan-400/50"
                       style={{
                         background: `linear-gradient(to right, #8b5cf6 0%, #ec4899 ${coverage}%, #e2e8f0 ${coverage}%, #cbd5e1 100%)`
@@ -152,8 +161,8 @@ export default function ROICalculator(){
             </div>
 
             <div className="mt-10 flex items-center gap-6">
-              <button 
-                onClick={calc} 
+              <button
+                type="submit"
                 disabled={isAnimating}
                 className="group relative overflow-hidden rounded-xl px-8 py-4 font-bold text-white bg-gradient-to-r from-orange-500 to-pink-500 shadow-lg hover:shadow-xl disabled:opacity-70 transition-all duration-300 transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
               >
@@ -166,14 +175,15 @@ export default function ROICalculator(){
                   </span>
                 )}
               </button>
-              <button 
-                onClick={reset} 
+              <button
+                type="button"
+                onClick={reset}
                 className="text-slate-600 hover:text-slate-800 font-medium transition-colors duration-200 hover:underline"
               >
                 Reset Fields
               </button>
             </div>
-          </div>
+          </form>
 
           {/* Right: Enhanced Results with Animations */}
           <div className="rounded-3xl border border-white/30 bg-white/70 backdrop-blur-md shadow-xl p-6 sm:p-8">
@@ -278,20 +288,29 @@ export default function ROICalculator(){
   );
 }
 
-function EnhancedInput({ icon, label, description, children }: {
+function EnhancedInput({ icon, label, description, children, id }: {
   icon: React.ReactNode;
   label: string;
   description: string;
   children: React.ReactNode;
+  id: string;
 }) {
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2">
         {icon}
-        <label className="font-semibold text-slate-800">{label}</label>
+        <label htmlFor={id} className="font-semibold text-slate-800">
+          {label}
+        </label>
       </div>
-      <p className="text-sm text-slate-600 mb-3">{description}</p>
-      {children}
+      <p id={`${id}-description`} className="text-sm text-slate-600 mb-3">
+        {description}
+      </p>
+      {React.cloneElement(children as React.ReactElement, {
+        id,
+        'aria-describedby': `${id}-description`,
+        'aria-required': 'true'
+      })}
     </div>
   );
 }
