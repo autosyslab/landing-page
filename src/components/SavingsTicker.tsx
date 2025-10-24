@@ -1,6 +1,6 @@
 import { AlertTriangle, Clock } from 'lucide-react';
 import { useSavingsTicker } from '../hooks/useSavingsTicker';
-import { fmtCurrency } from '../lib/format';
+import { fmtCurrencyWithCents } from '../lib/format';
 
 interface SavingsTickerProps {
   monthlySavings: number;
@@ -36,7 +36,7 @@ export default function SavingsTicker({ monthlySavings, isActive }: SavingsTicke
             <Clock className="w-4 h-4 text-white/70 animate-pulse" />
           </div>
           <div className="text-4xl font-black text-white tabular-nums tracking-tight">
-            {fmtCurrency(currentLoss)}
+            {fmtCurrencyWithCents(currentLoss)}
           </div>
           <div className="text-xs text-white/70 mt-1">...and counting</div>
         </div>
@@ -45,13 +45,13 @@ export default function SavingsTicker({ monthlySavings, isActive }: SavingsTicke
           <div className="p-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
             <div className="text-xs text-white/80 mb-1">Per Minute</div>
             <div className="text-lg font-bold text-white">
-              {fmtCurrency(costPerMinute)}
+              {fmtCurrencyWithCents(costPerMinute)}
             </div>
           </div>
           <div className="p-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
             <div className="text-xs text-white/80 mb-1">Per Hour</div>
             <div className="text-lg font-bold text-white">
-              {fmtCurrency(costPerMinute * 60)}
+              {fmtCurrencyWithCents(costPerMinute * 60)}
             </div>
           </div>
         </div>
