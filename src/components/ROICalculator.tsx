@@ -39,7 +39,6 @@ export default function ROICalculator(){
   };
 
   return (
-    <section id="roi" className="bg-gradient-to-b from-[#00d7ea] via-[#4dd0e1] via-[#87ceeb] to-white -mt-1">
     <section id="roi" className="bg-gradient-to-b from-[#00d7ea] via-[#4dd0e1] via-[#87ceeb] via-[#b0c4de] via-slate-200 to-slate-400 -mt-1">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="text-center">
@@ -275,7 +274,6 @@ export default function ROICalculator(){
           </div>
         </div>
       </div>
-    </section>
     </section>
   );
 }
