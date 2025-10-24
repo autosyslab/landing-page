@@ -60,7 +60,7 @@ function Pricing(){
             const popular = t === tiers.growth;
             return (
               <div key={t.name} className={clsx(
-                "relative rounded-3xl p-6 sm:p-8 border backdrop-blur-lg overflow-hidden group hover:scale-105 transition-all duration-300",
+                "relative rounded-3xl p-4 sm:p-6 md:p-8 border backdrop-blur-lg overflow-hidden group hover:scale-105 transition-all duration-300",
                 "flex flex-col min-h-[500px]", // Ensure equal height and flexbox layout
                 popular
                   ? "border-blue-400/60 bg-gradient-to-b from-blue-600/30 to-indigo-600/20 shadow-[0_10px_40px_rgba(0,212,255,0.4)] hover:shadow-[0_20px_60px_rgba(0,212,255,0.6)]"
@@ -233,7 +233,7 @@ function VaultFeature({ icon, text }: { icon: React.ReactNode; text: string }) {
 // Vault Visual Component - Optimized for top alignment
 function VaultVisual() {
   return (
-    <div className="relative h-[400px] md:h-[450px] flex items-center justify-center">
+    <div className="relative h-[300px] sm:h-[400px] md:h-[450px] flex items-center justify-center">
       {/* Main Vault Container */}
       <div className="relative w-80 h-80 rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/30 border-2 border-cyan-400/30 shadow-[0_0_50px_rgba(0,212,255,0.3)] overflow-hidden group hover:shadow-[0_0_70px_rgba(0,212,255,0.5)] transition-all duration-500">
         

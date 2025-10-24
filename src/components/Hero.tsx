@@ -34,13 +34,13 @@ export default function Hero() {
         "
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen flex items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 min-h-screen flex items-center">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* LEFT COPY */}
           <div className="max-w-2xl">
             <p className="text-cyan-100/90 text-sm font-medium tracking-wider uppercase">{H.eyebrow}</p>
 
-            <h1 className="mt-8 leading-[1.1] font-black text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight">
+            <h1 className="mt-8 leading-[1.1] font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight">
               <span className="block">Meet Your</span>
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-100 via-white to-cyan-200">
                 First AI
@@ -48,7 +48,7 @@ export default function Hero() {
               <span className="block">Employee</span>
             </h1>
 
-            <div className="mt-8 space-y-4 text-white/90 text-lg leading-relaxed max-w-xl">
+            <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4 text-white/90 text-base sm:text-lg leading-relaxed max-w-xl">
               <p className="font-medium">{H.body1}</p>
               <p className="text-white/75">{H.body2}</p>
             </div>

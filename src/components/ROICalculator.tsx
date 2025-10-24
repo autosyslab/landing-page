@@ -67,7 +67,7 @@ function ROICalculator(){
               <input
                 type="number"
                 min={0}
-                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white"
+                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-3 sm:p-4 text-base sm:text-lg text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white"
                 value={monthlyHours}
                 onChange={e=>setMonthlyHours(e.target.value === '' ? '' : +e.target.value)}
               />
@@ -82,7 +82,7 @@ function ROICalculator(){
               <input
                 type="number"
                 min={0}
-                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white"
+                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-3 sm:p-4 text-base sm:text-lg text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white"
                 value={hourlyCost}
                 onChange={e=>setHourlyCost(e.target.value === '' ? '' : +e.target.value)}
               />
@@ -97,7 +97,7 @@ function ROICalculator(){
               <input
                 type="number"
                 min={0}
-                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-4 text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white"
+                className="w-full rounded-xl border-2 border-slate-300 focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] p-3 sm:p-4 text-base sm:text-lg text-slate-800 bg-gradient-to-r from-white to-cyan-50/80 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none hover:bg-gradient-to-r hover:from-cyan-50/80 hover:to-white"
                 value={employees}
                 onChange={e=>setEmployees(e.target.value === '' ? '' : +e.target.value)}
               />
@@ -160,11 +160,11 @@ function ROICalculator(){
               </div>
             </div>
 
-            <div className="mt-10 flex items-center gap-6">
+            <div className="mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6">
               <button
                 type="submit"
                 disabled={isAnimating}
-                className="group relative overflow-hidden rounded-xl px-8 py-4 font-bold text-white bg-gradient-to-r from-orange-500 to-pink-500 shadow-lg hover:shadow-xl disabled:opacity-70 transition-all duration-300 transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                className="group relative overflow-hidden rounded-xl px-6 sm:px-8 py-4 font-bold text-base sm:text-lg text-white bg-gradient-to-r from-orange-500 to-pink-500 shadow-lg hover:shadow-xl disabled:opacity-70 transition-all duration-300 transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 w-full sm:w-auto"
               >
                 <span className={`transition-all duration-300 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
                   🚀 Calculate My Savings
@@ -178,7 +178,7 @@ function ROICalculator(){
               <button
                 type="button"
                 onClick={reset}
-                className="text-slate-600 hover:text-slate-800 font-medium transition-colors duration-200 hover:underline"
+                className="text-slate-600 hover:text-slate-800 font-medium transition-colors duration-200 hover:underline text-center py-2 sm:py-0"
               >
                 Reset Fields
               </button>
