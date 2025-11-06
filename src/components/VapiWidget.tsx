@@ -481,21 +481,71 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
           <div>
             {/* Cooldown Warning */}
             {cooldownRemaining && (
-              <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-300 shadow-lg">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0">
-                    <Clock className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-bold text-orange-800 text-lg">Demo Cooldown Active</span>
+              <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.15)]">
+                {/* Animated background effects */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(6,182,212,0.1),transparent_40%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(59,130,246,0.08),transparent_40%)]" />
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50" />
+
+                {/* Pulse animation circles */}
+                <div className="absolute top-1/2 left-8 -translate-y-1/2 w-32 h-32 rounded-full bg-cyan-500/5 blur-2xl animate-pulse" />
+                <div className="absolute top-1/2 right-8 -translate-y-1/2 w-40 h-40 rounded-full bg-blue-500/5 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+
+                <div className="relative p-8">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                    {/* Left side - Icon and text */}
+                    <div className="flex items-start gap-5">
+                      <div className="relative">
+                        {/* Glowing ring animation */}
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 blur-md animate-pulse" />
+                        <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/50">
+                          <Clock className="w-8 h-8 text-white" />
+                        </div>
+                      </div>
+
+                      <div className="flex-1">
+                        <h3 className="font-black text-2xl bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2 tracking-tight">
+                          AI Agent Recharging
+                        </h3>
+                        <p className="text-slate-300 text-base leading-relaxed mb-3">
+                          Your AI Employee is processing recent interactions and will be ready soon.
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-slate-400">
+                          <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse shadow-lg shadow-cyan-500/50" />
+                          <span className="font-medium">Fair access system active</span>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-orange-700 mb-2">
-                      You can start another demo in <span className="font-bold">{Math.ceil(cooldownRemaining / 60000)} minutes</span>.
-                    </p>
-                    <p className="text-xs text-orange-600">
-                      This cooldown prevents abuse of our free demo system and ensures fair access for everyone.
-                    </p>
+
+                    {/* Right side - Timer display */}
+                    <div className="flex flex-col items-center sm:items-end">
+                      <div className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-2">
+                        Available In
+                      </div>
+                      <div className="relative">
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 blur-xl" />
+                        <div className="relative px-8 py-4 rounded-2xl bg-slate-950/80 backdrop-blur-sm border border-cyan-500/30 shadow-xl">
+                          <div className="text-5xl font-black bg-gradient-to-br from-cyan-400 to-blue-400 bg-clip-text text-transparent tabular-nums tracking-tight">
+                            {Math.ceil(cooldownRemaining / 60000)}
+                          </div>
+                          <div className="text-center text-xs uppercase tracking-wider text-slate-400 font-bold mt-1">
+                            Minutes
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom info bar */}
+                  <div className="mt-6 pt-5 border-t border-cyan-500/10">
+                    <div className="flex items-center justify-center gap-3 text-sm">
+                      <div className="flex items-center gap-2 text-cyan-400/70">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span className="font-medium">Auto-refresh on availability</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -512,25 +562,28 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
               </div>
             )}
 
-            <button
-              onClick={startCall}
-              disabled={isLoading || !vapi || audioSupported !== true || !!cooldownRemaining}
-              aria-label="Start voice call with AI employee"
-              aria-busy={isLoading}
-              className={`${getButtonClasses()} disabled:opacity-70 disabled:cursor-not-allowed`}
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-slate-700 border-t-transparent rounded-full animate-spin mr-3" aria-hidden="true" />
-                  <span>Connecting...</span>
-                </>
-              ) : (
-                <>
-                  <Phone className="w-5 h-5 mr-3" aria-hidden="true" />
-                  Meet Your AI Employee Now →
-                </>
-              )}
-            </button>
+            {/* Only show button when no cooldown is active */}
+            {!cooldownRemaining && (
+              <button
+                onClick={startCall}
+                disabled={isLoading || !vapi || audioSupported !== true}
+                aria-label="Start voice call with AI employee"
+                aria-busy={isLoading}
+                className={`${getButtonClasses()} disabled:opacity-70 disabled:cursor-not-allowed`}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-slate-700 border-t-transparent rounded-full animate-spin mr-3" aria-hidden="true" />
+                    <span>Connecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Phone className="w-5 h-5 mr-3" aria-hidden="true" />
+                    Meet Your AI Employee Now →
+                  </>
+                )}
+              </button>
+            )}
 
             {/* Platform indicator for debugging */}
             {process.env.NODE_ENV === 'development' && (
