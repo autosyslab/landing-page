@@ -19,11 +19,7 @@ export default function NewsBanner() {
   }, []);
 
   const handleBookCall = () => {
-    // Scroll to pricing section or open calendar
-    const pricingSection = document.getElementById('pricing');
-    if (pricingSection) {
-      pricingSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    window.open('https://cal.com/iulian-boamfa-rjnurb/30min', '_blank');
   };
 
   return (
@@ -42,17 +38,17 @@ export default function NewsBanner() {
           >
             <div className="scroll-content flex items-center whitespace-nowrap px-8">
               <span className="inline-flex items-center text-white font-semibold text-sm md:text-base">
-                Transform your business with AI automation
+                Tired of manual work slowing you down? Let smart automations handle the busywork while you focus on growth.
               </span>
               <Zap className="mx-4 text-cyan-400 flex-shrink-0" size={18} fill="currentColor" />
 
               <span className="inline-flex items-center text-white font-semibold text-sm md:text-base">
-                Increase efficiency by 300% with intelligent agents
+                Your business runs better when it runs itself — discover how our AI systems work behind the scenes 24/7.
               </span>
               <Zap className="mx-4 text-cyan-400 flex-shrink-0" size={18} fill="currentColor" />
 
               <span className="inline-flex items-center text-white font-semibold text-sm md:text-base">
-                Book your consultation today and start saving time
+                Ready to scale without hiring more people? Book your free call and we'll show you what's possible with AI.
               </span>
               <Zap className="mx-4 text-cyan-400 flex-shrink-0" size={18} fill="currentColor" />
             </div>
