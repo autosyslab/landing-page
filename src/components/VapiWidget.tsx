@@ -82,7 +82,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [audioSupported, setAudioSupported] = useState<boolean | null>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [demoTimeRemaining, setDemoTimeRemaining] = useState(180); // 3 minutes in seconds
+  const [demoTimeRemaining, setDemoTimeRemaining] = useState(190); // 3:10 in seconds
   const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
 
   const vapiRef = useRef<Vapi | null>(null);
@@ -115,7 +115,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   // Demo timer countdown
   useEffect(() => {
     if (!isConnected) {
-      setDemoTimeRemaining(180);
+      setDemoTimeRemaining(190);
       if (demoTimerRef.current) {
         clearInterval(demoTimerRef.current);
         demoTimerRef.current = null;
@@ -408,38 +408,61 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
     return (
       <div
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isCritical
-            ? 'bg-gradient-to-r from-red-600 to-orange-600 animate-pulse'
+            ? 'bg-gradient-to-r from-red-600 via-red-500 to-orange-600'
             : isWarning
-            ? 'bg-gradient-to-r from-orange-500 to-yellow-500'
-            : 'bg-gradient-to-r from-cyan-600 to-blue-600'
+            ? 'bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500'
+            : 'bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                <Clock className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <div className="text-white font-bold text-lg">
-                  Demo Time Remaining
+        {/* Animated background overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.05),transparent_50%)]" />
+
+        <div className="relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div className="flex items-center justify-between flex-wrap gap-6">
+              <div className="flex items-center gap-4">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-lg ${
+                  isCritical
+                    ? 'bg-white/30 animate-pulse'
+                    : isWarning
+                    ? 'bg-white/25'
+                    : 'bg-white/20'
+                }`}>
+                  <Clock className="w-7 h-7 text-white drop-shadow-lg" />
                 </div>
-                <div className="text-white/80 text-sm">
-                  2-hour cooldown after use
+                <div>
+                  <div className="text-white font-black text-xl tracking-tight drop-shadow-md">
+                    Demo Time Remaining
+                  </div>
+                  <div className="flex items-center gap-2 text-white/90 text-sm font-medium mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white/70 animate-pulse" />
+                    2-hour cooldown after use
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="text-white font-black text-4xl tabular-nums tracking-tight">
-                {minutes}:{seconds.toString().padStart(2, '0')}
-              </div>
-              {isWarning && (
-                <div className="text-white/90 text-xs font-semibold mt-1">
-                  {isCritical ? '⚠️ Call ending soon!' : '⚠️ Less than 1 minute left'}
+              <div className="text-right">
+                <div className={`inline-flex items-center justify-center px-6 py-3 rounded-2xl backdrop-blur-md shadow-2xl ${
+                  isCritical
+                    ? 'bg-white/30 ring-2 ring-white/50'
+                    : isWarning
+                    ? 'bg-white/25 ring-1 ring-white/30'
+                    : 'bg-white/20 ring-1 ring-white/20'
+                }`}>
+                  <span className="text-white font-black text-5xl tabular-nums tracking-tighter drop-shadow-xl">
+                    {minutes}:{seconds.toString().padStart(2, '0')}
+                  </span>
                 </div>
-              )}
+                {isWarning && (
+                  <div className={`mt-2 text-center text-white/95 text-sm font-bold drop-shadow-md ${
+                    isCritical ? 'animate-pulse' : ''
+                  }`}>
+                    {isCritical ? '⚠️ Call ending soon!' : '⚠️ Less than 1 minute left'}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
