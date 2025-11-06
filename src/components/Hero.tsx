@@ -13,6 +13,7 @@ export default function Hero() {
       className="
         relative isolate overflow-hidden text-white
         bg-gradient-to-b from-[#032b3a] via-[#039cd0] to-[#00d7ea]
+        pt-14
       "
     >
       <a

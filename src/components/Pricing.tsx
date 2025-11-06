@@ -8,7 +8,7 @@ function Pricing(){
   const data = [tiers.starter, tiers.growth, tiers.elite] as const;
 
   return (
-    <section className="relative overflow-hidden text-white">
+    <section id="pricing" className="relative overflow-hidden text-white">
       {/* AI Circuit Pattern Background */}
       <div 
         className="absolute inset-0 opacity-20"

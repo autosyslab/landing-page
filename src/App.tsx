@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import Hero from "./components/Hero";
+import NewsBanner from "./components/NewsBanner";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 // Lazy load components that are below the fold
@@ -24,6 +25,9 @@ export default function App(){
   return (
     <ErrorBoundary fallbackMessage="We're experiencing technical difficulties. Please refresh the page or try again later.">
       <div id="top">
+        {/* News Banner - Fixed at top */}
+        <NewsBanner />
+
         {/* Hero loads immediately - it's above the fold */}
         <Hero />
 
