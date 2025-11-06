@@ -403,84 +403,11 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     );
   }
 
-  // Demo Timer Banner Component
-  const DemoTimerBanner = () => {
-    const minutes = Math.floor(demoTimeRemaining / 60);
-    const seconds = demoTimeRemaining % 60;
-    const isWarning = demoTimeRemaining <= 60; // Last minute warning
-    const isCritical = demoTimeRemaining <= 30; // Last 30 seconds critical
-
-    return (
-      <div
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isCritical
-            ? 'bg-gradient-to-r from-red-600 via-red-500 to-orange-600'
-            : isWarning
-            ? 'bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500'
-            : 'bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600'
-        }`}
-      >
-        {/* Animated background overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.05),transparent_50%)]" />
-
-        <div className="relative">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-            <div className="flex items-center justify-between flex-wrap gap-6">
-              <div className="flex items-center gap-4">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-lg ${
-                  isCritical
-                    ? 'bg-white/30 animate-pulse'
-                    : isWarning
-                    ? 'bg-white/25'
-                    : 'bg-white/20'
-                }`}>
-                  <Clock className="w-7 h-7 text-white drop-shadow-lg" />
-                </div>
-                <div>
-                  <div className="text-white font-black text-xl tracking-tight drop-shadow-md">
-                    Demo Time Remaining
-                  </div>
-                  <div className="flex items-center gap-2 text-white/90 text-sm font-medium mt-0.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white/70 animate-pulse" />
-                    2-hour cooldown after use
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className={`inline-flex items-center justify-center px-6 py-3 rounded-2xl backdrop-blur-md shadow-2xl ${
-                  isCritical
-                    ? 'bg-white/30 ring-2 ring-white/50'
-                    : isWarning
-                    ? 'bg-white/25 ring-1 ring-white/30'
-                    : 'bg-white/20 ring-1 ring-white/20'
-                }`}>
-                  <span className="text-white font-black text-5xl tabular-nums tracking-tighter drop-shadow-xl">
-                    {minutes}:{seconds.toString().padStart(2, '0')}
-                  </span>
-                </div>
-                {isWarning && (
-                  <div className={`mt-2 text-center text-white/95 text-sm font-bold drop-shadow-md ${
-                    isCritical ? 'animate-pulse' : ''
-                  }`}>
-                    {isCritical ? '⚠️ Call ending soon!' : '⚠️ Less than 1 minute left'}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <>
-      {/* Demo Timer Banner - shows when call is active */}
-      {isConnected && <DemoTimerBanner />}
-
       {/* Main Widget UI */}
-      <div className={isConnected ? 'mt-0' : ''}>
+      <div>
         {!isConnected ? (
           <div>
             {/* Cooldown Warning */}
@@ -588,7 +515,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
             )}
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-6">
             {/* Connection status indicator */}
             <div
               className="flex items-center gap-2 text-sm text-white/90"
@@ -597,6 +524,33 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
             >
               <Wifi className="w-5 h-5 text-green-400 animate-pulse" aria-hidden="true" />
               <span className="font-medium">Call in Progress</span>
+            </div>
+
+            {/* Compact Timer Display */}
+            <div className="relative group">
+              {/* Glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-2xl blur-lg opacity-75 group-hover:opacity-100 transition duration-300" />
+
+              {/* Timer container */}
+              <div className={`relative flex items-center gap-3 px-6 py-3 rounded-xl backdrop-blur-md border shadow-lg transition-all duration-300 ${
+                demoTimeRemaining <= 30
+                  ? 'bg-red-500/90 border-red-400/50 animate-pulse'
+                  : demoTimeRemaining <= 60
+                  ? 'bg-orange-500/90 border-orange-400/50'
+                  : 'bg-slate-800/90 border-slate-700/50'
+              }`}>
+                <Clock className={`w-5 h-5 ${
+                  demoTimeRemaining <= 60 ? 'text-white' : 'text-cyan-400'
+                }`} />
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-white/80 uppercase tracking-wide">
+                    {demoTimeRemaining <= 60 ? 'Time Remaining' : 'Demo Time'}
+                  </span>
+                  <span className="text-2xl font-black text-white tabular-nums tracking-tight">
+                    {Math.floor(demoTimeRemaining / 60)}:{(demoTimeRemaining % 60).toString().padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* End Call Button */}
