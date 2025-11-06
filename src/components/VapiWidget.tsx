@@ -115,7 +115,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   // Demo timer countdown
   useEffect(() => {
     if (!isConnected) {
-      setDemoTimeRemaining(190);
+      setDemoTimeRemaining(144);
       if (demoTimerRef.current) {
         clearInterval(demoTimerRef.current);
         demoTimerRef.current = null;
@@ -336,6 +336,8 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     }
 
     try {
+      // Store timestamp when user manually ends call to apply cooldown
+      localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
       vapiRef.current.stop();
     } catch (error) {
       console.error('Error stopping call:', error);
