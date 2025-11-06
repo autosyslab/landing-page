@@ -37,6 +37,7 @@ const handler: Handler = async (event) => {
       body: JSON.stringify({
         assistantId,
         type: 'web',
+        maxDurationSeconds: 144
       }),
     });
 

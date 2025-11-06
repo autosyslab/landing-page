@@ -82,7 +82,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [audioSupported, setAudioSupported] = useState<boolean | null>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [demoTimeRemaining, setDemoTimeRemaining] = useState(190); // 3:10 in seconds
+  const [demoTimeRemaining, setDemoTimeRemaining] = useState(144); // 2:24 in seconds
   const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
 
   const vapiRef = useRef<Vapi | null>(null);
@@ -318,7 +318,9 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     }
 
     try {
-      vapi.start(assistantId);
+      vapi.start(assistantId, {
+        maxDurationSeconds: 144
+      });
       // Store timestamp when call starts
       localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
     } catch (error) {

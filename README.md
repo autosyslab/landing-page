@@ -8,9 +8,9 @@ Configure your Vapi assistant with these exact settings in the Vapi Dashboard:
 ```json
 {
   "name": "Website Demo Agent",
-  "maxDurationSeconds": 60,
+  "maxDurationSeconds": 144,
   "hangupDelay": 1,
-  "serverTimeoutSeconds": 60,
+  "serverTimeoutSeconds": 144,
   "endCallPhrases": [
     "goodbye",
     "bye",
@@ -32,7 +32,7 @@ Configure your Vapi assistant with these exact settings in the Vapi Dashboard:
 
 1. **Navigate to your VAPI Dashboard** → Assistants → Select your assistant
 2. **Set Call Limits** in the "Call Settings" section:
-   - `Max Duration`: 60 seconds
+   - `Max Duration`: 144 seconds (2 minutes 24 seconds)
    - `Hangup Delay`: 1 second
    - `Auto Hangup`: Enabled
 3. **Configure End Call Detection** in "Conversation" section (optional):
@@ -44,9 +44,9 @@ Configure your Vapi assistant with these exact settings in the Vapi Dashboard:
 This project implements a timer-based protection system with inactivity warnings:
 
 #### Timer-Based Termination:
-1. **Client-Side Countdown**: 60-second countdown timer (1:00 → 0:59 → ... → 0:00)
+1. **Client-Side Countdown**: 144-second countdown timer (2:24 → 2:23 → ... → 0:00)
 2. **Automatic Hangup**: Call terminates immediately when timer reaches 0:00
-3. **VAPI Server Backup**: `maxDurationSeconds: 60` provides platform-level enforcement
+3. **VAPI Server Backup**: `maxDurationSeconds: 144` provides platform-level enforcement
 4. **Visual Feedback**: Real-time countdown display with color warnings
 
 #### Inactivity Warning System:
@@ -59,12 +59,12 @@ This project implements a timer-based protection system with inactivity warnings
 
 #### Timer-Based Tests:
 1. **Countdown Functionality**:
-   - Start a call and verify timer counts down from 1:00 → 0:59 → 0:58... → 0:00
+   - Start a call and verify timer counts down from 2:24 → 2:23 → 2:22... → 0:00
    - Confirm call automatically ends at 0:00
 
 2. **VAPI Server Backup**:
    - Disable client-side timer temporarily
-   - Verify VAPI server terminates call at 60 seconds
+   - Verify VAPI server terminates call at 144 seconds (2:24)
 
 #### Inactivity Warning Tests:
 3. **Warning Display**:
