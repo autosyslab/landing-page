@@ -505,15 +505,11 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
                       <div className="flex-1">
                         <h3 className="font-black text-2xl bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2 tracking-tight">
-                          AI Agent Recharging
+                          Recharge Protocol Started ⚡
                         </h3>
-                        <p className="text-slate-300 text-base leading-relaxed mb-3">
-                          Your AI Employee is processing recent interactions and will be ready soon.
+                        <p className="text-slate-300 text-base leading-relaxed">
+                          Our digital agent's on a quick cooldown — back with fresh energy soon.
                         </p>
-                        <div className="flex items-center gap-2 text-sm text-slate-400">
-                          <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse shadow-lg shadow-cyan-500/50" />
-                          <span className="font-medium">Fair access system active</span>
-                        </div>
                       </div>
                     </div>
 
@@ -536,17 +532,6 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
                     </div>
                   </div>
 
-                  {/* Bottom info bar */}
-                  <div className="mt-6 pt-5 border-t border-cyan-500/10">
-                    <div className="flex items-center justify-center gap-3 text-sm">
-                      <div className="flex items-center gap-2 text-cyan-400/70">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        <span className="font-medium">Auto-refresh on availability</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
