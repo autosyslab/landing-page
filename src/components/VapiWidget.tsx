@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Vapi from '@vapi-ai/web';
-import { Phone, PhoneOff, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { Phone, PhoneOff, AlertTriangle, Wifi, WifiOff, Clock } from 'lucide-react';
 
 interface VapiWidgetProps {
   assistantId: string;
@@ -82,11 +82,14 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [audioSupported, setAudioSupported] = useState<boolean | null>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [demoTimeRemaining, setDemoTimeRemaining] = useState(180); // 3 minutes in seconds
+  const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
 
   const vapiRef = useRef<Vapi | null>(null);
   const isConnectedRef = useRef(false);
   const initAttempts = useRef(0);
   const maxInitAttempts = 3;
+  const demoTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check audio support on component mount (but NOT permissions)
   useEffect(() => {
@@ -99,6 +102,49 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
     initAudioCheck();
   }, []);
+
+  // Check cooldown status on mount and periodically
+  useEffect(() => {
+    checkCooldown();
+    const interval = setInterval(() => {
+      checkCooldown();
+    }, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  // Demo timer countdown
+  useEffect(() => {
+    if (!isConnected) {
+      setDemoTimeRemaining(180);
+      if (demoTimerRef.current) {
+        clearInterval(demoTimerRef.current);
+        demoTimerRef.current = null;
+      }
+      return;
+    }
+
+    demoTimerRef.current = setInterval(() => {
+      setDemoTimeRemaining((prev) => {
+        if (prev <= 1) {
+          if (demoTimerRef.current) {
+            clearInterval(demoTimerRef.current);
+            demoTimerRef.current = null;
+          }
+          // End call when timer reaches 0
+          endCall();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (demoTimerRef.current) {
+        clearInterval(demoTimerRef.current);
+        demoTimerRef.current = null;
+      }
+    };
+  }, [isConnected]);
 
   // Initialize VAPI with retry logic and error handling
   const initializeVapi = useCallback(async () => {
@@ -177,12 +223,35 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     }
   }, [onCallStart, onCallEnd, browserInfo]);
 
+  // Check cooldown status
+  const checkCooldown = useCallback((): boolean => {
+    const lastCall = localStorage.getItem('lastVapiCallTimestamp');
+    if (!lastCall) {
+      setCooldownRemaining(null);
+      return true;
+    }
+
+    const lastCallTime = parseInt(lastCall);
+    const now = Date.now();
+    const cooldownPeriod = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+    const elapsed = now - lastCallTime;
+
+    if (elapsed < cooldownPeriod) {
+      const remaining = cooldownPeriod - elapsed;
+      setCooldownRemaining(remaining);
+      return false;
+    }
+
+    setCooldownRemaining(null);
+    return true;
+  }, []);
+
   // iOS-specific audio context handling
   const resumeAudioContextIfNeeded = useCallback(async () => {
     try {
       const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
       const audioContext = new AudioContext();
-      
+
       if (audioContext.state === 'suspended') {
         await audioContext.resume();
         console.log('Audio context resumed for iOS');
@@ -217,6 +286,18 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const startCall = async () => {
     if (!vapi || isConnected || isLoading) return;
 
+    // Check cooldown first
+    if (!checkCooldown()) {
+      const minutes = Math.ceil((cooldownRemaining || 0) / 60000);
+      const hours = Math.floor(minutes / 60);
+      const remainingMins = minutes % 60;
+      const timeStr = hours > 0
+        ? `${hours} hour${hours > 1 ? 's' : ''} and ${remainingMins} minute${remainingMins !== 1 ? 's' : ''}`
+        : `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+      setConnectionError(`Please wait ${timeStr} before starting another demo`);
+      return;
+    }
+
     // Request microphone permission ONLY when user clicks the button
     setIsLoading(true);
     setConnectionError(null);
@@ -238,6 +319,8 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
     try {
       vapi.start(assistantId);
+      // Store timestamp when call starts
+      localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
     } catch (error) {
       console.error('Failed to start call:', error);
       setConnectionError('Failed to start voice call');
@@ -300,7 +383,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     );
   }
 
-  if (connectionError) {
+  if (connectionError && !cooldownRemaining) {
     return (
       <div className="text-center p-6 bg-red-50 border border-red-200 rounded-2xl">
         <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
@@ -316,66 +399,153 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     );
   }
 
+  // Demo Timer Banner Component
+  const DemoTimerBanner = () => {
+    const minutes = Math.floor(demoTimeRemaining / 60);
+    const seconds = demoTimeRemaining % 60;
+    const isWarning = demoTimeRemaining <= 60; // Last minute warning
+    const isCritical = demoTimeRemaining <= 30; // Last 30 seconds critical
+
+    return (
+      <div
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isCritical
+            ? 'bg-gradient-to-r from-red-600 to-orange-600 animate-pulse'
+            : isWarning
+            ? 'bg-gradient-to-r from-orange-500 to-yellow-500'
+            : 'bg-gradient-to-r from-cyan-600 to-blue-600'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                <Clock className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="text-white font-bold text-lg">
+                  Demo Time Remaining
+                </div>
+                <div className="text-white/80 text-sm">
+                  2-hour cooldown after use
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-white font-black text-4xl tabular-nums tracking-tight">
+                {minutes}:{seconds.toString().padStart(2, '0')}
+              </div>
+              {isWarning && (
+                <div className="text-white/90 text-xs font-semibold mt-1">
+                  {isCritical ? '⚠️ Call ending soon!' : '⚠️ Less than 1 minute left'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
-      {!isConnected ? (
-        <div>
-          <button
-            onClick={startCall}
-            disabled={isLoading || !vapi || audioSupported !== true}
-            aria-label="Start voice call with AI employee"
-            aria-busy={isLoading}
-            className={`${getButtonClasses()} disabled:opacity-70 disabled:cursor-not-allowed`}
-          >
-            {isLoading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-slate-700 border-t-transparent rounded-full animate-spin mr-3" aria-hidden="true" />
-                <span>Connecting...</span>
-              </>
-            ) : (
-              <>
-                <Phone className="w-5 h-5 mr-3" aria-hidden="true" />
-                Meet Your AI Employee Now →
-              </>
-            )}
-          </button>
-          
-          {/* Platform indicator for debugging */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-2 text-xs text-gray-500">
-              {browserInfo.isIOS && '📱 iOS'} 
-              {browserInfo.isAndroid && '🤖 Android'}
-              {browserInfo.isDesktop && '💻 Desktop'}
-              {browserInfo.isSafari && ' Safari'}
-              {browserInfo.isChrome && ' Chrome'}
-              {browserInfo.isFirefox && ' Firefox'}
-              {browserInfo.isEdge && ' Edge'}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center gap-4">
-          {/* Connection status indicator */}
-          <div
-            className="flex items-center gap-2 text-sm text-white/90"
-            role="status"
-            aria-label="Voice call connected"
-          >
-            <Wifi className="w-5 h-5 text-green-400 animate-pulse" aria-hidden="true" />
-            <span className="font-medium">Call in Progress</span>
-          </div>
+      {/* Demo Timer Banner - shows when call is active */}
+      {isConnected && <DemoTimerBanner />}
 
-          {/* End Call Button */}
-          <button
-            onClick={endCall}
-            aria-label="End voice call"
-            className={getButtonClasses(true)}
-          >
-            <PhoneOff className="w-5 h-5 mr-3" aria-hidden="true" />
-            End Call
-          </button>
-        </div>
-      )}
+      {/* Main Widget UI */}
+      <div className={isConnected ? 'mt-0' : ''}>
+        {!isConnected ? (
+          <div>
+            {/* Cooldown Warning */}
+            {cooldownRemaining && (
+              <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-300 shadow-lg">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <Clock className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-bold text-orange-800 text-lg">Demo Cooldown Active</span>
+                    </div>
+                    <p className="text-sm text-orange-700 mb-2">
+                      You can start another demo in <span className="font-bold">{Math.ceil(cooldownRemaining / 60000)} minutes</span>.
+                    </p>
+                    <p className="text-xs text-orange-600">
+                      This cooldown prevents abuse of our free demo system and ensures fair access for everyone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Connection Error */}
+            {connectionError && (
+              <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                  <span className="font-bold text-red-800">Unable to Start</span>
+                </div>
+                <p className="text-sm text-red-700">{connectionError}</p>
+              </div>
+            )}
+
+            <button
+              onClick={startCall}
+              disabled={isLoading || !vapi || audioSupported !== true || !!cooldownRemaining}
+              aria-label="Start voice call with AI employee"
+              aria-busy={isLoading}
+              className={`${getButtonClasses()} disabled:opacity-70 disabled:cursor-not-allowed`}
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-slate-700 border-t-transparent rounded-full animate-spin mr-3" aria-hidden="true" />
+                  <span>Connecting...</span>
+                </>
+              ) : (
+                <>
+                  <Phone className="w-5 h-5 mr-3" aria-hidden="true" />
+                  Meet Your AI Employee Now →
+                </>
+              )}
+            </button>
+
+            {/* Platform indicator for debugging */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-2 text-xs text-gray-500">
+                {browserInfo.isIOS && '📱 iOS'}
+                {browserInfo.isAndroid && '🤖 Android'}
+                {browserInfo.isDesktop && '💻 Desktop'}
+                {browserInfo.isSafari && ' Safari'}
+                {browserInfo.isChrome && ' Chrome'}
+                {browserInfo.isFirefox && ' Firefox'}
+                {browserInfo.isEdge && ' Edge'}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4">
+            {/* Connection status indicator */}
+            <div
+              className="flex items-center gap-2 text-sm text-white/90"
+              role="status"
+              aria-label="Voice call connected"
+            >
+              <Wifi className="w-5 h-5 text-green-400 animate-pulse" aria-hidden="true" />
+              <span className="font-medium">Call in Progress</span>
+            </div>
+
+            {/* End Call Button */}
+            <button
+              onClick={endCall}
+              aria-label="End voice call"
+              className={getButtonClasses(true)}
+            >
+              <PhoneOff className="w-5 h-5 mr-3" aria-hidden="true" />
+              End Call
+            </button>
+          </div>
+        )}
+      </div>
     </>
   );
 };
