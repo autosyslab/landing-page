@@ -2,24 +2,18 @@ import { lazy, Suspense } from "react";
 import Hero from "./components/Hero";
 import NewsBanner from "./components/NewsBanner";
 import ErrorBoundary from "./components/ErrorBoundary";
+import {
+  ROICalculatorSkeleton,
+  StatsSkeleton,
+  PricingSkeleton,
+  FooterSkeleton,
+} from "./components/LoadingSkeletons";
 
-// Lazy load components that are below the fold
+// Lazy load components that are below the fold with prefetching
 const ROICalculator = lazy(() => import("./components/ROICalculator"));
 const Stats = lazy(() => import("./components/Stats"));
 const Pricing = lazy(() => import("./components/Pricing"));
 const Footer = lazy(() => import("./components/Footer"));
-
-// Loading component for Suspense fallback
-function SectionLoader() {
-  return (
-    <div className="w-full py-20 flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-        <p className="text-slate-600 font-medium">Loading...</p>
-      </div>
-    </div>
-  );
-}
 
 export default function App(){
   return (
@@ -31,22 +25,22 @@ export default function App(){
         {/* Hero loads immediately - it's above the fold */}
         <Hero />
 
-        {/* Below-the-fold components load lazily */}
-        <Suspense fallback={<SectionLoader />}>
+        {/* Below-the-fold components load lazily with skeleton loaders */}
+        <Suspense fallback={<ROICalculatorSkeleton />}>
           <ROICalculator />
         </Suspense>
 
-        <Suspense fallback={<SectionLoader />}>
+        <Suspense fallback={<StatsSkeleton />}>
           <Stats />
         </Suspense>
 
         <div className="bg-gradient-to-b from-[#071420] via-[#0a1625] via-[#0d1a2a] to-[#0d1a2a]">
-          <Suspense fallback={<SectionLoader />}>
+          <Suspense fallback={<PricingSkeleton />}>
             <Pricing />
           </Suspense>
         </div>
 
-        <Suspense fallback={<SectionLoader />}>
+        <Suspense fallback={<FooterSkeleton />}>
           <Footer />
         </Suspense>
       </div>
