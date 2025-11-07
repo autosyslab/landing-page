@@ -71,6 +71,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const initAttempts = useRef(0);
   const maxInitAttempts = 3;
   const demoTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // Check audio support on component mount (but NOT permissions)
   useEffect(() => {
@@ -162,9 +163,15 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
         onCallStart?.();
 
-        // iOS-specific: Resume audio context if suspended
-        if (browserInfo.isIOS) {
-          resumeAudioContextIfNeeded();
+        // iOS-specific: Ensure audio context is running
+        if (browserInfo.isIOS && audioContextRef.current) {
+          if (audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume().then(() => {
+              console.log('✅ iOS Audio context resumed after call start');
+            }).catch((err) => {
+              console.warn('⚠️ Failed to resume audio context:', err);
+            });
+          }
         }
       });
 
@@ -241,18 +248,26 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     return true;
   }, []);
 
-  // iOS-specific audio context handling
-  const resumeAudioContextIfNeeded = useCallback(async () => {
+  // iOS-specific audio context initialization - MUST be called from user gesture
+  const initializeAudioContextForIOS = useCallback(() => {
     try {
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      const audioContext = new AudioContext();
+      // Only create if not already created
+      if (!audioContextRef.current) {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        audioContextRef.current = new AudioContext();
+        console.log('✅ iOS AudioContext created from user gesture');
+      }
 
-      if (audioContext.state === 'suspended') {
-        await audioContext.resume();
-        console.log('Audio context resumed for iOS');
+      // Resume if suspended
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().then(() => {
+          console.log('✅ iOS AudioContext resumed');
+        }).catch((err) => {
+          console.warn('⚠️ Failed to resume AudioContext:', err);
+        });
       }
     } catch (error) {
-      console.warn('Failed to resume audio context:', error);
+      console.warn('⚠️ Failed to initialize AudioContext:', error);
     }
   }, []);
 
@@ -269,6 +284,13 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     return () => {
       vapiRef.current?.stop();
       isConnectedRef.current = false;
+
+      // Close audio context if it exists
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch((err) => {
+          console.warn('Failed to close audio context:', err);
+        });
+      }
     };
   }, []);
 
@@ -298,13 +320,19 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     setConnectionError(null);
 
     try {
-      // iOS requires user interaction to start audio
-      if (browserInfo.isIOS) {
-        await resumeAudioContextIfNeeded();
+      // iOS Safari: Initialize AudioContext from user gesture FIRST
+      // This MUST happen before VAPI starts to unlock audio playback
+      if (browserInfo.isIOS || browserInfo.isSafari) {
+        console.log('🍎 iOS/Safari detected - initializing AudioContext from user gesture');
+        initializeAudioContextForIOS();
+
+        // Small delay to ensure audio context is ready
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       // Start the VAPI call
       // VAPI SDK will handle microphone permission request internally
+      console.log('📞 Starting VAPI call...');
       vapi.start(assistantId, {
         maxDurationSeconds: 144
       });
@@ -313,7 +341,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
 
     } catch (error: any) {
-      console.error('Failed to start call:', error);
+      console.error('❌ Failed to start call:', error);
 
       // Check if error is permission-related
       if (error?.name === 'NotAllowedError' || error?.message?.includes('permission')) {
