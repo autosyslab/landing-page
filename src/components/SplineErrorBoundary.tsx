@@ -23,7 +23,9 @@ export class SplineErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Spline loading error:', error, errorInfo);
 
-    // Report to monitoring service in production
+    // Temporarily disabled - no error logging endpoint yet
+    // TODO: Set up Supabase error logging or Netlify function
+    /*
     if (import.meta.env.PROD) {
       fetch('/.netlify/functions/error-log', {
         method: 'POST',
@@ -40,6 +42,7 @@ export class SplineErrorBoundary extends Component<Props, State> {
         console.error('Failed to send error log:', err);
       });
     }
+    */
   }
 
   render() {
