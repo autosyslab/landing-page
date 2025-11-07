@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Vapi from '@vapi-ai/web';
-import { Phone, PhoneOff, AlertTriangle, Wifi, WifiOff, Clock } from 'lucide-react';
+import { Phone, PhoneOff, AlertTriangle, Wifi, WifiOff, Clock, Send, CheckCircle } from 'lucide-react';
+import { reportVapiError } from '../utils/errorReporter';
 
 interface VapiWidgetProps {
   assistantId: string;
@@ -65,6 +66,8 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [demoTimeRemaining, setDemoTimeRemaining] = useState(144); // 2:24 in seconds
   const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
+  const [reportStatus, setReportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isReporting, setIsReporting] = useState(false);
 
   const vapiRef = useRef<Vapi | null>(null);
   const isConnectedRef = useRef(false);
@@ -401,6 +404,35 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     }
   };
 
+  const handleReportError = async () => {
+    if (!connectionError || isReporting) return;
+
+    setIsReporting(true);
+    setReportStatus(null);
+
+    try {
+      const result = await reportVapiError(connectionError);
+
+      if (result.success) {
+        setReportStatus({ type: 'success', message: result.message });
+        // Auto-dismiss success message after 5 seconds
+        setTimeout(() => setReportStatus(null), 5000);
+      } else {
+        setReportStatus({ type: 'error', message: result.message });
+        // Auto-dismiss error message after 5 seconds
+        setTimeout(() => setReportStatus(null), 5000);
+      }
+    } catch (error) {
+      setReportStatus({
+        type: 'error',
+        message: 'Unable to send report. Please try again later.'
+      });
+      setTimeout(() => setReportStatus(null), 5000);
+    } finally {
+      setIsReporting(false);
+    }
+  };
+
   // Platform-specific styling classes
   const getButtonClasses = (isEndCall = false) => {
     const baseClasses = "inline-flex items-center rounded-2xl px-8 py-4 font-bold text-lg transform transition-all duration-200 focus:outline-none";
@@ -435,12 +467,50 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
         <h3 className="font-bold text-red-800 mb-2">Connection Error</h3>
         <p className="text-red-600 text-sm mb-4">{connectionError}</p>
-        <button
-          onClick={initializeVapi}
-          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-        >
-          Try Again
-        </button>
+
+        {/* Success/Error Report Status */}
+        {reportStatus && (
+          <div className={`mb-4 p-3 rounded-lg flex items-center justify-center gap-2 ${
+            reportStatus.type === 'success'
+              ? 'bg-green-100 border border-green-300'
+              : 'bg-orange-100 border border-orange-300'
+          }`}>
+            {reportStatus.type === 'success' && (
+              <CheckCircle className="w-4 h-4 text-green-600" />
+            )}
+            <p className={`text-sm font-medium ${
+              reportStatus.type === 'success' ? 'text-green-700' : 'text-orange-700'
+            }`}>
+              {reportStatus.message}
+            </p>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          <button
+            onClick={initializeVapi}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors inline-flex items-center justify-center gap-2"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={handleReportError}
+            disabled={isReporting || reportStatus?.type === 'success'}
+            className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isReporting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Sending...</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                <span>Report Issue</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
     );
   }
@@ -516,7 +586,43 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
                   <AlertTriangle className="w-5 h-5 text-red-600" />
                   <span className="font-bold text-red-800">Unable to Start</span>
                 </div>
-                <p className="text-sm text-red-700">{connectionError}</p>
+                <p className="text-sm text-red-700 mb-3">{connectionError}</p>
+
+                {/* Success/Error Report Status */}
+                {reportStatus && (
+                  <div className={`mb-3 p-3 rounded-lg flex items-center gap-2 ${
+                    reportStatus.type === 'success'
+                      ? 'bg-green-100 border border-green-300'
+                      : 'bg-orange-100 border border-orange-300'
+                  }`}>
+                    {reportStatus.type === 'success' && (
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                    )}
+                    <p className={`text-sm font-medium ${
+                      reportStatus.type === 'success' ? 'text-green-700' : 'text-orange-700'
+                    }`}>
+                      {reportStatus.message}
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleReportError}
+                  disabled={isReporting || reportStatus?.type === 'success'}
+                  className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors inline-flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isReporting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Report Issue</span>
+                    </>
+                  )}
+                </button>
               </div>
             )}
 

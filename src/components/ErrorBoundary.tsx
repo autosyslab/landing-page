@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Send, CheckCircle } from 'lucide-react';
+import { reportComponentError } from '../utils/errorReporter';
 
 interface Props {
   children: ReactNode;
@@ -10,6 +11,8 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  reportStatus: { type: 'success' | 'error'; message: string } | null;
+  isReporting: boolean;
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -19,6 +22,8 @@ class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      reportStatus: null,
+      isReporting: false,
     };
   }
 
@@ -33,7 +38,47 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
+    this.setState({ hasError: false, error: null, errorInfo: null, reportStatus: null, isReporting: false });
+  };
+
+  handleReportError = async () => {
+    const { error, errorInfo, isReporting, reportStatus } = this.state;
+
+    if (!error || isReporting || reportStatus?.type === 'success') return;
+
+    this.setState({ isReporting: true, reportStatus: null });
+
+    try {
+      const result = await reportComponentError(
+        error,
+        errorInfo?.componentStack
+      );
+
+      if (result.success) {
+        this.setState({
+          reportStatus: { type: 'success', message: result.message },
+          isReporting: false,
+        });
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => this.setState({ reportStatus: null }), 5000);
+      } else {
+        this.setState({
+          reportStatus: { type: 'error', message: result.message },
+          isReporting: false,
+        });
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => this.setState({ reportStatus: null }), 5000);
+      }
+    } catch (err) {
+      this.setState({
+        reportStatus: {
+          type: 'error',
+          message: 'Unable to send report. Please try again later.',
+        },
+        isReporting: false,
+      });
+      setTimeout(() => this.setState({ reportStatus: null }), 5000);
+    }
   };
 
   render() {
@@ -62,6 +107,24 @@ class ErrorBoundary extends Component<Props, State> {
               </div>
             )}
 
+            {/* Success/Error Report Status */}
+            {this.state.reportStatus && (
+              <div className={`mb-6 p-4 rounded-lg flex items-center gap-2 ${
+                this.state.reportStatus.type === 'success'
+                  ? 'bg-green-100 border border-green-300'
+                  : 'bg-orange-100 border border-orange-300'
+              }`}>
+                {this.state.reportStatus.type === 'success' && (
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                )}
+                <p className={`text-sm font-medium ${
+                  this.state.reportStatus.type === 'success' ? 'text-green-700' : 'text-orange-700'
+                }`}>
+                  {this.state.reportStatus.message}
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-col gap-3">
               <button
                 onClick={this.handleReset}
@@ -78,14 +141,23 @@ class ErrorBoundary extends Component<Props, State> {
                 Return to Homepage
               </button>
 
-              <a
-                href="https://cal.com/iulian-boamfa-rjnurb/30min"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
+              <button
+                onClick={this.handleReportError}
+                disabled={this.state.isReporting || this.state.reportStatus?.type === 'success'}
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-700 text-white font-medium rounded-xl hover:bg-slate-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Need help? Contact Support →
-              </a>
+                {this.state.isReporting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Sending Report...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>Report Issue</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
