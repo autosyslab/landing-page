@@ -87,13 +87,31 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
 
   // Check cooldown status on mount and periodically
   useEffect(() => {
-    checkCooldown();
+    const performCooldownCheck = () => {
+      const lastCall = localStorage.getItem('lastVapiCallTimestamp');
+      if (!lastCall) {
+        setCooldownRemaining(null);
+        return;
+      }
+
+      const lastCallTime = parseInt(lastCall);
+      const now = Date.now();
+      const cooldownPeriod = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+      const elapsed = now - lastCallTime;
+
+      if (elapsed < cooldownPeriod) {
+        const remaining = cooldownPeriod - elapsed;
+        setCooldownRemaining(remaining);
+      } else {
+        setCooldownRemaining(null);
+      }
+    };
+
+    performCooldownCheck();
     // Check every second to ensure cooldown updates immediately
-    const interval = setInterval(() => {
-      checkCooldown();
-    }, 1000);
+    const interval = setInterval(performCooldownCheck, 1000);
     return () => clearInterval(interval);
-  }, [checkCooldown]);
+  }, []);
 
   // Demo timer countdown
   useEffect(() => {
@@ -301,10 +319,12 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     isConnectedRef.current = false;
 
     // Store timestamp when call ends to apply cooldown
-    localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
+    const timestamp = Date.now();
+    localStorage.setItem('lastVapiCallTimestamp', timestamp.toString());
 
-    // Immediately check and update cooldown status
-    checkCooldown();
+    // Immediately update cooldown status
+    const cooldownPeriod = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+    setCooldownRemaining(cooldownPeriod);
 
     // Clear any connection errors when call ends normally
     setConnectionError(null);

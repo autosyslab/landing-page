@@ -3,7 +3,8 @@
 **Date:** 2025-11-07
 **Issue:** Recharge Protocol banner not appearing automatically after call ends
 **Status:** ✅ **FIXED**
-**Build:** ✅ SUCCESS (43.71s)
+**Build:** ✅ SUCCESS (47.90s)
+**Additional Fix:** Resolved "Cannot access 'checkCooldown' before initialization" dependency error
 
 ---
 
@@ -345,5 +346,90 @@ The Recharge Protocol banner now appears **automatically and immediately** when 
 3. Cooldown checked immediately (1s interval)
 4. Errors cleared when appropriate
 5. Smooth, predictable user experience
+
+---
+
+## 🔧 ADDITIONAL FIX: Dependency Error
+
+### **Issue Found on Reload:**
+```
+Error: Cannot access 'checkCooldown' before initialization
+```
+
+### **Root Cause:**
+The `checkCooldown` callback was used in a `useEffect` before it was defined, and adding it to the dependency array created a circular dependency:
+
+```typescript
+// ❌ BROKEN: Circular dependency
+useEffect(() => {
+  checkCooldown();  // Function called here
+  const interval = setInterval(() => {
+    checkCooldown();  // And here
+  }, 1000);
+  return () => clearInterval(interval);
+}, [checkCooldown]);  // But depends on itself!
+
+const checkCooldown = useCallback(() => {
+  // ... implementation
+}, []);  // Defined AFTER the useEffect
+```
+
+### **Solution:**
+Inlined the cooldown check logic directly in the `useEffect` to avoid the circular dependency:
+
+```typescript
+// ✅ FIXED: No circular dependency
+useEffect(() => {
+  const performCooldownCheck = () => {
+    const lastCall = localStorage.getItem('lastVapiCallTimestamp');
+    if (!lastCall) {
+      setCooldownRemaining(null);
+      return;
+    }
+
+    const lastCallTime = parseInt(lastCall);
+    const now = Date.now();
+    const cooldownPeriod = 2 * 60 * 60 * 1000;
+    const elapsed = now - lastCallTime;
+
+    if (elapsed < cooldownPeriod) {
+      setCooldownRemaining(cooldownPeriod - elapsed);
+    } else {
+      setCooldownRemaining(null);
+    }
+  };
+
+  performCooldownCheck();
+  const interval = setInterval(performCooldownCheck, 1000);
+  return () => clearInterval(interval);
+}, []);  // No dependencies!
+```
+
+### **Also Updated `handleCallEnd`:**
+```typescript
+const handleCallEnd = () => {
+  // ... other state updates
+
+  // Store timestamp and immediately set cooldown
+  const timestamp = Date.now();
+  localStorage.setItem('lastVapiCallTimestamp', timestamp.toString());
+
+  // Set cooldown to full 2 hours immediately
+  const cooldownPeriod = 2 * 60 * 60 * 1000;
+  setCooldownRemaining(cooldownPeriod);
+
+  // Clear errors
+  setConnectionError(null);
+};
+```
+
+**Benefits:**
+- ✅ No circular dependencies
+- ✅ No initialization errors
+- ✅ Cooldown updates every second
+- ✅ Immediate feedback on call end
+- ✅ Clean, predictable behavior
+
+---
 
 🚀 **Ready to deploy!**
