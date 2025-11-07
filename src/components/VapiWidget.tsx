@@ -88,11 +88,12 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
   // Check cooldown status on mount and periodically
   useEffect(() => {
     checkCooldown();
+    // Check every second to ensure cooldown updates immediately
     const interval = setInterval(() => {
       checkCooldown();
-    }, 60000); // Check every minute
+    }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [checkCooldown]);
 
   // Demo timer countdown
   useEffect(() => {
@@ -298,6 +299,15 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     setIsConnected(false);
     setIsLoading(false);
     isConnectedRef.current = false;
+
+    // Store timestamp when call ends to apply cooldown
+    localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
+
+    // Immediately check and update cooldown status
+    checkCooldown();
+
+    // Clear any connection errors when call ends normally
+    setConnectionError(null);
   };
 
   const startCall = async () => {
@@ -337,8 +347,7 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
         maxDurationSeconds: 144
       });
 
-      // Store timestamp when call starts
-      localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
+      // Note: Timestamp is stored when call ENDS in handleCallEnd()
 
     } catch (error: any) {
       console.error('❌ Failed to start call:', error);
@@ -363,11 +372,12 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     }
 
     try {
-      // Store timestamp when user manually ends call to apply cooldown
-      localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
+      // Stop the call - handleCallEnd will be triggered by 'call-end' event
       vapiRef.current.stop();
     } catch (error) {
       console.error('Error stopping call:', error);
+      // If error, manually trigger handleCallEnd to ensure cooldown is set
+      handleCallEnd();
     }
   };
 
