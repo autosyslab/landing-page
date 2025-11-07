@@ -51,25 +51,6 @@ const checkAudioSupport = async (): Promise<boolean> => {
   }
 };
 
-const requestMicrophonePermission = async (): Promise<boolean> => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      } 
-    });
-    
-    // Stop the stream immediately - we just wanted to check permissions
-    stream.getTracks().forEach(track => track.stop());
-    return true;
-  } catch (error) {
-    console.warn('Microphone permission denied or unavailable:', error);
-    return false;
-  }
-};
-
 const VapiWidget: React.FC<VapiWidgetProps> = ({
   assistantId,
   onCallStart,
@@ -224,7 +205,25 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       });
 
       vapiInstance.on('error', (error) => {
-        console.log('📞 Call ended:', error);
+        console.error('❌ VAPI Error:', error);
+
+        // Set user-facing error message
+        if (error && typeof error === 'object' && 'message' in error) {
+          const errorMessage = (error as Error).message;
+
+          if (errorMessage.includes('permission') || errorMessage.includes('Permission')) {
+            setConnectionError('Microphone permission denied. Please allow microphone access.');
+          } else if (errorMessage.includes('network') || errorMessage.includes('Network')) {
+            setConnectionError('Network error. Please check your connection and try again.');
+          } else if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+            setConnectionError('Connection timeout. Please try again.');
+          } else {
+            setConnectionError(`Call error: ${errorMessage}`);
+          }
+        } else {
+          setConnectionError('An error occurred during the call. Please try again.');
+        }
+
         handleCallEnd();
       });
 
@@ -329,25 +328,13 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     setConnectionError(null);
 
     try {
-      // Request microphone permission WHEN user clicks the button
-      // This will trigger the browser's permission prompt
-      const hasPermission = await requestMicrophonePermission();
-
-      if (!hasPermission) {
-        setConnectionError('Microphone permission denied. Please allow microphone access and try again.');
-        setPermissionGranted(false);
-        setIsLoading(false);
-        return;
-      }
-
-      setPermissionGranted(true);
-
       // iOS requires user interaction to start audio
       if (browserInfo.isIOS) {
         await resumeAudioContextIfNeeded();
       }
 
       // Start the VAPI call
+      // VAPI SDK will handle microphone permission request internally
       vapi.start(assistantId, {
         maxDurationSeconds: 144
       });
@@ -355,9 +342,19 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       // Store timestamp when call starts
       localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to start call:', error);
-      setConnectionError('Failed to start voice call. Please try again.');
+
+      // Check if error is permission-related
+      if (error?.name === 'NotAllowedError' || error?.message?.includes('permission')) {
+        setConnectionError('Microphone permission denied. Please allow microphone access and try again.');
+        setPermissionGranted(false);
+      } else if (error?.name === 'NotFoundError') {
+        setConnectionError('No microphone found. Please connect a microphone and try again.');
+      } else {
+        setConnectionError('Failed to start voice call. Please try again.');
+      }
+
       setIsLoading(false);
     }
   };
