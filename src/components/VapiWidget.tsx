@@ -324,34 +324,40 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
       return;
     }
 
-    // Request microphone permission ONLY when user clicks the button
+    // Start loading and clear any previous errors
     setIsLoading(true);
     setConnectionError(null);
 
-    // Request microphone permission on button click
-    const hasPermission = await requestMicrophonePermission();
-    if (!hasPermission) {
-      setConnectionError('Microphone permission is required for voice calls');
-      setPermissionGranted(false);
-      setIsLoading(false);
-      return;
-    }
-    setPermissionGranted(true);
-
-    // iOS requires user interaction to start audio
-    if (browserInfo.isIOS) {
-      await resumeAudioContextIfNeeded();
-    }
-
     try {
+      // Request microphone permission WHEN user clicks the button
+      // This will trigger the browser's permission prompt
+      const hasPermission = await requestMicrophonePermission();
+
+      if (!hasPermission) {
+        setConnectionError('Microphone permission denied. Please allow microphone access and try again.');
+        setPermissionGranted(false);
+        setIsLoading(false);
+        return;
+      }
+
+      setPermissionGranted(true);
+
+      // iOS requires user interaction to start audio
+      if (browserInfo.isIOS) {
+        await resumeAudioContextIfNeeded();
+      }
+
+      // Start the VAPI call
       vapi.start(assistantId, {
         maxDurationSeconds: 144
       });
+
       // Store timestamp when call starts
       localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
+
     } catch (error) {
       console.error('Failed to start call:', error);
-      setConnectionError('Failed to start voice call');
+      setConnectionError('Failed to start voice call. Please try again.');
       setIsLoading(false);
     }
   };
@@ -395,23 +401,8 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     );
   }
 
-  if (permissionGranted === false && audioSupported === true) {
-    return (
-      <div className="text-center p-6 bg-orange-50 border border-orange-200 rounded-2xl">
-        <WifiOff className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-        <h3 className="font-bold text-orange-800 mb-2">Microphone Permission Required</h3>
-        <p className="text-orange-600 text-sm mb-4">
-          Voice calls require microphone access. Please enable permissions and refresh the page.
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-        >
-          Refresh Page
-        </button>
-      </div>
-    );
-  }
+  // Only show permission error if user explicitly denied it (not on initial render)
+  // This prevents showing the error before user even tries to start a call
 
   if (connectionError && !cooldownRemaining) {
     return (
