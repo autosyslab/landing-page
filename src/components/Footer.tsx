@@ -54,28 +54,13 @@ function Footer() {
             </a>
           </div>
 
-          {/* Legal Links */}
-          <div className="flex items-center gap-4 text-sm">
-            <a
-              href="/privacy-policy"
-              className="text-slate-400 hover:text-white transition-colors duration-200"
-            >
-              Privacy Policy
-            </a>
+          {/* Legal Links - Coming Soon */}
+          <div className="flex items-center gap-4 text-sm text-slate-500">
+            <span>Privacy Policy (Coming Soon)</span>
             <span className="text-slate-600">•</span>
-            <a
-              href="/terms-of-service"
-              className="text-slate-400 hover:text-white transition-colors duration-200"
-            >
-              Terms of Service
-            </a>
+            <span>Terms of Service (Coming Soon)</span>
             <span className="text-slate-600">•</span>
-            <a
-              href="/cookie-policy"
-              className="text-slate-400 hover:text-white transition-colors duration-200"
-            >
-              Cookie Policy
-            </a>
+            <span>Cookie Policy (Coming Soon)</span>
           </div>
 
           {/* Copyright */}
