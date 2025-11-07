@@ -54,15 +54,6 @@ function Footer() {
             </a>
           </div>
 
-          {/* Legal Links - Coming Soon */}
-          <div className="flex items-center gap-4 text-sm text-slate-500">
-            <span>Privacy Policy (Coming Soon)</span>
-            <span className="text-slate-600">•</span>
-            <span>Terms of Service (Coming Soon)</span>
-            <span className="text-slate-600">•</span>
-            <span>Cookie Policy (Coming Soon)</span>
-          </div>
-
           {/* Copyright */}
           <div className="text-slate-500 text-sm">
             © 2025 AutoSys Lab. All rights reserved.
