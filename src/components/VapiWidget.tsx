@@ -156,19 +156,45 @@ const VapiWidget: React.FC<VapiWidgetProps> = ({
     try {
       setConnectionError(null);
 
-      // Fetch API key from serverless function
-      const tokenResponse = await fetch('/.netlify/functions/get-vapi-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Check if we're in development mode
+      const isDevelopment = window.location.hostname === 'localhost' ||
+                           window.location.hostname === '127.0.0.1';
 
-      if (!tokenResponse.ok) {
-        throw new Error('Failed to retrieve API credentials');
+      let apiKey: string;
+
+      if (isDevelopment) {
+        // Development mode: Use environment variable directly or show friendly message
+        console.warn('⚠️ Running in development mode. VAPI functions may not be available.');
+
+        // For development, you can either:
+        // 1. Set VITE_VAPI_API_KEY in your .env file, OR
+        // 2. The widget will show a "development mode" message
+        const devApiKey = import.meta.env.VITE_VAPI_API_KEY;
+
+        if (!devApiKey) {
+          setConnectionError('Voice features unavailable in development mode. Deploy to Netlify to test.');
+          return;
+        }
+
+        apiKey = devApiKey;
+      } else {
+        // Production mode: Fetch from serverless function
+        const tokenResponse = await fetch('/.netlify/functions/get-vapi-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!tokenResponse.ok) {
+          const errorText = await tokenResponse.text();
+          console.error('Token fetch failed:', errorText);
+          throw new Error('Failed to retrieve API credentials');
+        }
+
+        const responseData = await tokenResponse.json();
+        apiKey = responseData.apiKey;
       }
-
-      const { apiKey } = await tokenResponse.json();
 
       const vapiInstance = new Vapi(apiKey);
       setVapi(vapiInstance);

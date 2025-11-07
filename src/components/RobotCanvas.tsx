@@ -13,6 +13,7 @@ export default function RobotCanvas({ className }: Props) {
   const [ready, setReady] = useState(false)
   const [error, setError] = useState(false)
   const [timedOut, setTimedOut] = useState(false)
+  const [loaded, setLoaded] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -22,15 +23,18 @@ export default function RobotCanvas({ className }: Props) {
     const io = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting && !ready && !error) {
-          setReady(true)
+          // Small delay to ensure browser is ready for WebGL
+          setTimeout(() => {
+            setReady(true)
 
-          // Set 10 second timeout for Spline loading
-          timeoutRef.current = setTimeout(() => {
-            if (!error) {
-              setTimedOut(true)
-              console.warn('Spline scene loading timed out after 10 seconds')
-            }
-          }, 10000)
+            // Set 15 second timeout for Spline loading (increased from 10s)
+            timeoutRef.current = setTimeout(() => {
+              if (!error) {
+                setTimedOut(true)
+                console.warn('Spline scene loading timed out after 15 seconds')
+              }
+            }, 15000)
+          }, 100)
         }
       },
       { rootMargin: "200px" }
@@ -105,20 +109,39 @@ export default function RobotCanvas({ className }: Props) {
         ) : (
           <SplineErrorBoundary
             fallback={
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                    <AlertTriangle className="w-8 h-8 text-red-300" />
-                  </div>
-                  <p className="text-cyan-200/70">3D scene error. Please refresh.</p>
+              <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
+                  <AlertTriangle className="w-8 h-8 text-red-300" />
                 </div>
+                <h3 className="text-xl font-bold text-white mb-2">3D Scene Error</h3>
+                <p className="text-cyan-200/70 text-sm max-w-sm mb-4">
+                  The 3D visualization encountered an error. This might be due to browser limitations or network issues.
+                </p>
+                <button
+                  onClick={() => {
+                    setError(false)
+                    setTimedOut(false)
+                    setReady(false)
+                    setLoaded(false)
+                    setTimeout(() => setReady(true), 100)
+                  }}
+                  className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors text-sm font-medium"
+                >
+                  Try Again
+                </button>
               </div>
             }
           >
             <SplineScene
               scene={scene}
               className="w-full h-full"
-              onError={() => setError(true)}
+              onError={() => {
+                console.error('Spline scene failed to load')
+                setError(true)
+                if (timeoutRef.current) {
+                  clearTimeout(timeoutRef.current)
+                }
+              }}
             />
           </SplineErrorBoundary>
         )}
