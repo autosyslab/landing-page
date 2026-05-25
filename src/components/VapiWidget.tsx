@@ -1,0 +1,529 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Vapi from '@vapi-ai/web';
+import { Phone, PhoneOff, AlertTriangle, Wifi, Clock, Send, CheckCircle } from 'lucide-react';
+import { reportVapiError } from '../utils/errorReporter';
+
+interface VapiWidgetProps {
+  assistantId: string;
+  onCallStart?: () => void;
+  onCallEnd?: () => void;
+}
+
+const getBrowserInfo = () => {
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+  const isChrome = /Chrome/.test(ua);
+  const isFirefox = /Firefox/.test(ua);
+  const isEdge = /Edg/.test(ua);
+  return {
+    isIOS,
+    isAndroid,
+    isSafari,
+    isChrome,
+    isFirefox,
+    isEdge,
+    isMobile: isIOS || isAndroid,
+    isDesktop: !isIOS && !isAndroid,
+  };
+};
+
+const checkAudioSupport = async (): Promise<boolean> => {
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return false;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+const VapiWidget: React.FC<VapiWidgetProps> = ({ assistantId, onCallStart, onCallEnd }) => {
+  const [vapi, setVapi] = useState<Vapi | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  // Lazy init so getBrowserInfo() runs once, not on every render
+  const [browserInfo] = useState(() => getBrowserInfo());
+  const [audioSupported, setAudioSupported] = useState<boolean | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [demoTimeRemaining, setDemoTimeRemaining] = useState(144);
+  const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
+  const [reportStatus, setReportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isReporting, setIsReporting] = useState(false);
+
+  const vapiRef = useRef<Vapi | null>(null);
+  const isConnectedRef = useRef(false);
+  const initAttempts = useRef(0);
+  const maxInitAttempts = 3;
+  const demoTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    checkAudioSupport().then(setAudioSupported);
+  }, []);
+
+  // On mount: check if there's an existing cooldown
+  useEffect(() => {
+    const lastCall = localStorage.getItem('lastVapiCallTimestamp');
+    if (!lastCall) return;
+    const elapsed = Date.now() - parseInt(lastCall);
+    if (elapsed < COOLDOWN_MS) setCooldownRemaining(COOLDOWN_MS - elapsed);
+  }, []);
+
+  // Tick the cooldown down once per second — only runs when cooldown is active
+  useEffect(() => {
+    if (!cooldownRemaining || cooldownRemaining <= 0) {
+      if (cooldownRemaining !== null) setCooldownRemaining(null);
+      return;
+    }
+    const id = setTimeout(() => {
+      setCooldownRemaining(prev => (prev && prev > 1000 ? prev - 1000 : null));
+    }, 1000);
+    return () => clearTimeout(id);
+  }, [cooldownRemaining]);
+
+  // Demo timer countdown
+  useEffect(() => {
+    if (!isConnected) {
+      setDemoTimeRemaining(144);
+      if (demoTimerRef.current) {
+        clearInterval(demoTimerRef.current);
+        demoTimerRef.current = null;
+      }
+      return;
+    }
+
+    demoTimerRef.current = setInterval(() => {
+      setDemoTimeRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(demoTimerRef.current!);
+          demoTimerRef.current = null;
+          endCall();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (demoTimerRef.current) {
+        clearInterval(demoTimerRef.current);
+        demoTimerRef.current = null;
+      }
+    };
+  }, [isConnected]);
+
+  const initializeVapi = useCallback(async () => {
+    if (initAttempts.current >= maxInitAttempts) {
+      setConnectionError('Failed to initialize voice system after multiple attempts');
+      return;
+    }
+
+    try {
+      setConnectionError(null);
+
+      const publicKey = import.meta.env.VITE_VAPI_PUBLIC_KEY;
+      if (!publicKey) {
+        setConnectionError('Voice features not configured. Please add VITE_VAPI_PUBLIC_KEY to your .env file.');
+        return;
+      }
+
+      const vapiInstance = new Vapi(publicKey);
+      setVapi(vapiInstance);
+      vapiRef.current = vapiInstance;
+      initAttempts.current++;
+
+      vapiInstance.on('call-start', () => {
+        setIsConnected(true);
+        isConnectedRef.current = true;
+        setIsLoading(false);
+        setConnectionError(null);
+        onCallStart?.();
+
+        if (browserInfo.isIOS && audioContextRef.current?.state === 'suspended') {
+          audioContextRef.current.resume().catch(() => {});
+        }
+      });
+
+      vapiInstance.on('call-end', () => {
+        handleCallEnd();
+        onCallEnd?.();
+      });
+
+      vapiInstance.on('error', (error) => {
+        console.error('VAPI Error:', error);
+
+        if (error && typeof error === 'object' && 'message' in error) {
+          const msg = (error as Error).message;
+          if (msg.includes('permission') || msg.includes('Permission')) {
+            setConnectionError('Microphone permission denied. Please allow microphone access.');
+          } else if (msg.includes('network') || msg.includes('Network')) {
+            setConnectionError('Network error. Please check your connection and try again.');
+          } else if (msg.includes('timeout') || msg.includes('Timeout')) {
+            setConnectionError('Connection timeout. Please try again.');
+          } else {
+            setConnectionError(`Call error: ${msg}`);
+          }
+        } else {
+          setConnectionError('An error occurred during the call. Please try again.');
+        }
+
+        handleCallEnd();
+      });
+    } catch (error) {
+      console.error('Failed to initialize VAPI:', error);
+      setConnectionError('Failed to initialize voice system');
+
+      if (initAttempts.current < maxInitAttempts) {
+        const retryDelay = Math.pow(2, initAttempts.current) * 1000;
+        setTimeout(initializeVapi, retryDelay);
+      }
+    }
+  }, [onCallStart, onCallEnd, browserInfo]);
+
+  const checkCooldown = useCallback((): boolean => {
+    const lastCall = localStorage.getItem('lastVapiCallTimestamp');
+    if (!lastCall) return true;
+    const elapsed = Date.now() - parseInt(lastCall);
+    if (elapsed >= COOLDOWN_MS) return true;
+    setCooldownRemaining(COOLDOWN_MS - elapsed);
+    return false;
+  }, []);
+
+  const initializeAudioContextForIOS = useCallback(() => {
+    try {
+      if (!audioContextRef.current) {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        audioContextRef.current = new AudioContext();
+      }
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().catch(() => {});
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (audioSupported === true) initializeVapi();
+  }, [audioSupported, initializeVapi]);
+
+  useEffect(() => {
+    return () => {
+      vapiRef.current?.stop();
+      isConnectedRef.current = false;
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(() => {});
+      }
+    };
+  }, []);
+
+  const handleCallEnd = () => {
+    setIsConnected(false);
+    setIsLoading(false);
+    isConnectedRef.current = false;
+    localStorage.setItem('lastVapiCallTimestamp', Date.now().toString());
+    setCooldownRemaining(COOLDOWN_MS);
+    setConnectionError(null);
+  };
+
+  const startCall = async () => {
+    if (!vapi || isConnected || isLoading) return;
+
+    if (!checkCooldown()) {
+      const minutes = Math.ceil((cooldownRemaining || 0) / 60000);
+      const hours = Math.floor(minutes / 60);
+      const remainingMins = minutes % 60;
+      const timeStr = hours > 0
+        ? `${hours} hour${hours > 1 ? 's' : ''} and ${remainingMins} minute${remainingMins !== 1 ? 's' : ''}`
+        : `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+      setConnectionError(`Please wait ${timeStr} before starting another demo`);
+      return;
+    }
+
+    setIsLoading(true);
+    setConnectionError(null);
+
+    try {
+      if (browserInfo.isIOS || browserInfo.isSafari) {
+        initializeAudioContextForIOS();
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      vapi.start(assistantId, { maxDurationSeconds: 144 });
+    } catch (error: any) {
+      console.error('Failed to start call:', error);
+
+      if (error?.name === 'NotAllowedError' || error?.message?.includes('permission')) {
+        setConnectionError('Microphone permission denied. Please allow microphone access and try again.');
+      } else if (error?.name === 'NotFoundError') {
+        setConnectionError('No microphone found. Please connect a microphone and try again.');
+      } else {
+        setConnectionError('Failed to start voice call. Please try again.');
+      }
+
+      setIsLoading(false);
+    }
+  };
+
+  const endCall = () => {
+    if (!isConnectedRef.current || !vapiRef.current) return;
+    try {
+      vapiRef.current.stop();
+    } catch (error) {
+      console.error('Error stopping call:', error);
+      handleCallEnd();
+    }
+  };
+
+  const handleReportError = async () => {
+    if (!connectionError || isReporting) return;
+    setIsReporting(true);
+    setReportStatus(null);
+
+    try {
+      const result = await reportVapiError(connectionError);
+      setReportStatus({ type: result.success ? 'success' : 'error', message: result.message });
+      setTimeout(() => setReportStatus(null), 5000);
+    } catch {
+      setReportStatus({ type: 'error', message: 'Unable to send report. Please try again later.' });
+      setTimeout(() => setReportStatus(null), 5000);
+    } finally {
+      setIsReporting(false);
+    }
+  };
+
+  const getButtonClasses = (isEndCall = false) => {
+    const base = "inline-flex items-center rounded-2xl px-8 py-4 font-bold text-lg transform transition-all duration-200 focus:outline-none";
+    const motion = browserInfo.isMobile ? "active:scale-95 touch-manipulation" : "hover:scale-105";
+    const color = isEndCall
+      ? "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-[0_10px_30px_rgba(239,68,68,0.4)] hover:shadow-[0_15px_35px_rgba(239,68,68,0.5)] ring-1 ring-white/50 focus-visible:ring-2 focus-visible:ring-red-300"
+      : "bg-gradient-to-r from-[#59def2] to-[#6ee7f5] hover:from-[#6ee7f5] hover:to-[#7debf7] text-slate-900 shadow-[0_10px_30px_rgba(89,222,242,0.4)] hover:shadow-[0_15px_35px_rgba(89,222,242,0.5)] ring-1 ring-white/50 focus-visible:ring-2 focus-visible:ring-white/80";
+    return `${base} ${motion} ${color}`;
+  };
+
+  if (audioSupported === false) {
+    return (
+      <div className="text-center p-6 bg-red-50 border border-red-200 rounded-2xl">
+        <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+        <h3 className="font-bold text-red-800 mb-2">Audio Not Supported</h3>
+        <p className="text-red-600 text-sm">
+          Your browser doesn't support voice functionality. Please use a modern browser like Chrome, Firefox, Safari, or Edge.
+        </p>
+      </div>
+    );
+  }
+
+  if (connectionError && !cooldownRemaining) {
+    return (
+      <div className="text-center p-6 bg-red-50 border border-red-200 rounded-2xl">
+        <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+        <h3 className="font-bold text-red-800 mb-2">Connection Error</h3>
+        <p className="text-red-600 text-sm mb-4">{connectionError}</p>
+
+        {reportStatus && (
+          <div className={`mb-4 p-3 rounded-lg flex items-center justify-center gap-2 ${
+            reportStatus.type === 'success' ? 'bg-green-100 border border-green-300' : 'bg-orange-100 border border-orange-300'
+          }`}>
+            {reportStatus.type === 'success' && <CheckCircle className="w-4 h-4 text-green-600" />}
+            <p className={`text-sm font-medium ${reportStatus.type === 'success' ? 'text-green-700' : 'text-orange-700'}`}>
+              {reportStatus.message}
+            </p>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          <button
+            onClick={initializeVapi}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors inline-flex items-center justify-center gap-2"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={handleReportError}
+            disabled={isReporting || reportStatus?.type === 'success'}
+            className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isReporting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Sending...</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                <span>Report Issue</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {!isConnected ? (
+        <div>
+          {cooldownRemaining && (
+            <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.15)]">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(6,182,212,0.1),transparent_40%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(59,130,246,0.08),transparent_40%)]" />
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50" />
+              <div className="absolute top-1/2 left-8 -translate-y-1/2 w-32 h-32 rounded-full bg-cyan-500/5 blur-2xl animate-pulse" />
+              <div className="absolute top-1/2 right-8 -translate-y-1/2 w-40 h-40 rounded-full bg-blue-500/5 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+
+              <div className="relative p-8">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                  <div className="flex items-start gap-5">
+                    <div className="relative">
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 blur-md animate-pulse" />
+                      <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/50">
+                        <Clock className="w-8 h-8 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-black text-2xl bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2 tracking-tight">
+                        Recharge Protocol Started ⚡
+                      </h3>
+                      <p className="text-slate-300 text-base leading-relaxed">
+                        Our digital agent's on a quick cooldown — back with fresh energy soon.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center sm:items-end">
+                    <div className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-2">Available In</div>
+                    <div className="relative">
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 blur-xl" />
+                      <div className="relative px-8 py-4 rounded-2xl bg-slate-950/80 backdrop-blur-sm border border-cyan-500/30 shadow-xl">
+                        <div className="text-5xl font-black bg-gradient-to-br from-cyan-400 to-blue-400 bg-clip-text text-transparent tabular-nums tracking-tight">
+                          {Math.ceil(cooldownRemaining / 60000)}
+                        </div>
+                        <div className="text-center text-xs uppercase tracking-wider text-slate-400 font-bold mt-1">Minutes</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {connectionError && (
+            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <span className="font-bold text-red-800">Unable to Start</span>
+              </div>
+              <p className="text-sm text-red-700 mb-3">{connectionError}</p>
+
+              {reportStatus && (
+                <div className={`mb-3 p-3 rounded-lg flex items-center gap-2 ${
+                  reportStatus.type === 'success' ? 'bg-green-100 border border-green-300' : 'bg-orange-100 border border-orange-300'
+                }`}>
+                  {reportStatus.type === 'success' && <CheckCircle className="w-4 h-4 text-green-600" />}
+                  <p className={`text-sm font-medium ${reportStatus.type === 'success' ? 'text-green-700' : 'text-orange-700'}`}>
+                    {reportStatus.message}
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={handleReportError}
+                disabled={isReporting || reportStatus?.type === 'success'}
+                className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors inline-flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isReporting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>Report Issue</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {!cooldownRemaining && (
+            <button
+              onClick={startCall}
+              disabled={isLoading || !vapi || audioSupported !== true}
+              aria-label="Start voice call with AI employee"
+              aria-busy={isLoading}
+              className={`${getButtonClasses()} disabled:opacity-70 disabled:cursor-not-allowed`}
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-slate-700 border-t-transparent rounded-full animate-spin mr-3" aria-hidden="true" />
+                  <span>Connecting...</span>
+                </>
+              ) : (
+                <>
+                  <Phone className="w-5 h-5 mr-3" aria-hidden="true" />
+                  Meet Your AI Employee Now →
+                </>
+              )}
+            </button>
+          )}
+
+          {import.meta.env.DEV && (
+            <div className="mt-2 text-xs text-gray-500">
+              {browserInfo.isIOS && '📱 iOS'}
+              {browserInfo.isAndroid && '🤖 Android'}
+              {browserInfo.isDesktop && '💻 Desktop'}
+              {browserInfo.isSafari && ' Safari'}
+              {browserInfo.isChrome && ' Chrome'}
+              {browserInfo.isFirefox && ' Firefox'}
+              {browserInfo.isEdge && ' Edge'}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-6">
+          <div className="flex items-center gap-2 text-sm text-white/90" role="status" aria-label="Voice call connected">
+            <Wifi className="w-5 h-5 text-green-400 animate-pulse" aria-hidden="true" />
+            <span className="font-medium">Call in Progress</span>
+          </div>
+
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-2xl blur-lg opacity-75 group-hover:opacity-100 transition duration-300" />
+            <div className={`relative flex items-center gap-3 px-6 py-3 rounded-xl backdrop-blur-md border shadow-lg transition-all duration-300 ${
+              demoTimeRemaining <= 30
+                ? 'bg-red-500/90 border-red-400/50 animate-pulse'
+                : demoTimeRemaining <= 60
+                ? 'bg-orange-500/90 border-orange-400/50'
+                : 'bg-slate-800/90 border-slate-700/50'
+            }`}>
+              <Clock className={`w-5 h-5 ${demoTimeRemaining <= 60 ? 'text-white' : 'text-cyan-400'}`} />
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-white/80 uppercase tracking-wide">
+                  {demoTimeRemaining <= 60 ? 'Time Remaining' : 'Demo Time'}
+                </span>
+                <span className="text-2xl font-black text-white tabular-nums tracking-tight">
+                  {Math.floor(demoTimeRemaining / 60)}:{(demoTimeRemaining % 60).toString().padStart(2, '0')}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={endCall}
+            aria-label="End voice call"
+            className={getButtonClasses(true)}
+          >
+            <PhoneOff className="w-5 h-5 mr-3" aria-hidden="true" />
+            End Call
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default VapiWidget;
